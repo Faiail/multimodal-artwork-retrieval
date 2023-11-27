@@ -4,15 +4,14 @@ import pandas as pd
 import torch
 import torch_geometric as pyg
 import os
-from torch_geometric.data import (InMemoryDataset, HeteroData, download_url,
-                                  extract_zip)
+from torch_geometric.data import InMemoryDataset
 import src.utils as utils
 
 
 class LabelEncoder(IntEnum):
     SCALAR = 0
     ONE_HOT = 1
-    W2V = 2
+    OPEN_CLIP = 2
 
 
 class VisFeatEncoder(IntEnum):
@@ -50,8 +49,7 @@ class ArtGraph(InMemoryDataset):
         for f in os.listdir(fr'{root}/processed'):
             os.remove(fr'{root}/processed/{f}')
         os.rmdir(fr'{root}/processed')
-        
-        
+
     @property
     def raw_dir(self):
         return os.path.join(self.root, 'raw')
@@ -104,7 +102,6 @@ class ArtGraph(InMemoryDataset):
         num_nodes_df.rename(columns=exceptions, inplace=True)
         nodes_type = self.__get_node_types(exceptions)  # add map training nod
 
-
         # get label features
         if self.labels == LabelEncoder.SCALAR:
             for feature, node_type in enumerate(filter(lambda x: x != 'artwork', num_nodes_df.columns)):
@@ -115,9 +112,12 @@ class ArtGraph(InMemoryDataset):
         elif self.labels == LabelEncoder.ONE_HOT:
             for node_type in filter(lambda x: x != 'artwork', num_nodes_df.columns):
                 data[node_type].x = torch.eye(num_nodes_df[node_type].tolist()[0])
-        elif self.labels == LabelEncoder.W2V:
-            raise NotImplementedError()
-            # TODO: add w2v features
+        elif self.labels == LabelEncoder.OPEN_CLIP:
+            for nodes_type in filter(lambda x: x != 'artwork', num_nodes_df.columns):
+                data[nodes_type].x = utils.load_tensor(file=f'{self.label_feats_root}/{nodes_type}.safetensors',
+                                                       key='embeddings',
+                                                       framework='pt',
+                                                       device='cpu')
 
         # add edges
         for edge_type in os.listdir(fr'{self.raw_dir}\relations'):

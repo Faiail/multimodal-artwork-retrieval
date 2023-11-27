@@ -22,9 +22,10 @@ class LabelDataset(Dataset):
         return len(self._data)
 
 
-def get_labels(in_dir, exceptions):
-    return filter(lambda x: x[0] not in exceptions,
-                  map(lambda x: (x.split('_')[0], x), os.listdir(in_dir)))
+def get_labels(in_dir, exceptions, mapping):
+    return map(lambda x: (mapping.get(x[0], x[0]), x[1]),
+               filter(lambda x: x[0] not in exceptions,
+                      map(lambda x: (x.split('_')[0], x), os.listdir(in_dir))))
 
 
 @torch.no_grad()
@@ -43,15 +44,14 @@ def main():
         dataset = LabelDataset(data_path=f'{parameters["labels"]["in_dir"]}/{filename}',
                                tokenizer=tokenizer)
         loader = DataLoader(dataset, **parameters['dataset'])
-        tensors = {}
+        tensors = None
         for names, tokens in tqdm(loader):
             tokens = tokens.to(device)
             embeddings = model.encode_text(tokens)
-            tensors.update({name: embeddings[i] for i, name in enumerate(names)})
-        save_file(tensors, f'{out_dir}/{lab}.safetensors')
+            tensors = embeddings if tensors is None else torch.cat([tensors, embeddings])
+        save_file({'embeddings': tensors}, f'{out_dir}/{lab}.safetensors')
         print('Done!')
 
 
 if __name__ == '__main__':
     main()
-
