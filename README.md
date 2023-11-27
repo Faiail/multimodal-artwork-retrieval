@@ -60,6 +60,10 @@ Project Organization
 cd src/features
 python extract_images_text_feats.py
 ```
-
+* DOWNLOADING ARTGRAPH RAW DATA:
+```
+cd src/data
+python download_artgraph.py
+```
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

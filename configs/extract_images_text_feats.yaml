@@ -5,5 +5,5 @@ model:
   batch_size: 128
 data:
   path: ../../data/raw/data_captions.csv
-  image_dir: ../..//data/raw/images-resized
-  out_dir: ../..//data/processed/embeddings
+  image_dir: ../../data/raw/images-resized
+  out_dir: ../../data/processed/embeddings
