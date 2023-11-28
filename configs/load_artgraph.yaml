@@ -1,5 +1,0 @@
-data:
-  root: ../../data/external/artgraph2bestemotions
-  vis_feats_root: ../../data/processed/embeddings
-  label_feats_root: ../../data/processed/label_embeddings
-  labels: 2

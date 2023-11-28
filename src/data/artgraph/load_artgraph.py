@@ -66,7 +66,7 @@ class ArtGraph(InMemoryDataset):
     @property
     def processed_file_names(self):
         return 'none.pt'
-    
+
     def download(self):
         return
 
@@ -95,7 +95,7 @@ class ArtGraph(InMemoryDataset):
 
         # get artwork visual features
         data['artwork'].x = self.__get_artwork_features()
-            
+
         path = os.path.join(self.raw_dir, 'num-node-dict.csv')
         num_nodes_df = pd.read_csv(path)
         exceptions = {"training": "training_node"}
@@ -131,16 +131,10 @@ class ArtGraph(InMemoryDataset):
 
         if self.pre_transform is not None:
             data = self.pre_transform(data)
-        
+
         torch.save(self.collate([data]), self.processed_paths[0])
 
     @property
     def num_features(self):
         return self.data['artist'].x.shape[1]
 
-
-if __name__ == '__main__':
-    from src.utils import load_parameters
-    parameters = load_parameters('../../configs/load_artgraph.yaml')
-    data = artgraph = ArtGraph(**parameters['data'])[0]
-    print(data)
