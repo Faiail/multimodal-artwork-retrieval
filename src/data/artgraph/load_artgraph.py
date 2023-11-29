@@ -33,7 +33,7 @@ class ArtGraph(InMemoryDataset):
             self, root,
             vis_feats_root,
             label_feats_root=None,
-            labels=LabelEncoder.SCALAR,
+            labels=LabelEncoder.OPEN_CLIP,
             vis_feats=VisFeatEncoder.OPEN_CLIP,
     ):
         self.labels = labels
@@ -108,7 +108,7 @@ class ArtGraph(InMemoryDataset):
                 ones = [feature + 1] * num_nodes_df[node_type].tolist()[0]
                 data_tensor = torch.tensor(ones)
                 data_tensor = torch.reshape(data_tensor, (num_nodes_df[node_type].tolist()[0], 1))
-                data[node_type].x = data_tensor
+                data[node_type].x = data_tensor.type(torch.FloatTensor)
         elif self.labels == LabelEncoder.ONE_HOT:
             for node_type in filter(lambda x: x != 'artwork', num_nodes_df.columns):
                 data[node_type].x = torch.eye(num_nodes_df[node_type].tolist()[0])
@@ -124,7 +124,7 @@ class ArtGraph(InMemoryDataset):
             sub, verb, obj = edge_type.split("___")
             path = fr'{self.raw_dir}\relations\\{edge_type}\edge.csv'
             edge_index = pd.read_csv(path, header=None, dtype=np.int64).values
-            edge_index = torch.from_numpy(edge_index).t().contiguous()
+            edge_index = torch.from_numpy(edge_index).t().contiguous().type(torch.LongTensor)
             if obj == 'training':
                 obj = 'training_node'
             data[(sub, verb, obj)].edge_index = edge_index
