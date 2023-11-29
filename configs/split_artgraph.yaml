@@ -9,4 +9,4 @@ splitter:
   stratify: style
   val_ratio: 0.1
   test_ratio: 0.1
-out_dir: ../../data/processed/artgraph_split
+out_dir: ../../data/processed/artgraph_split_open_clip

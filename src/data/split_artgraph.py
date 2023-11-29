@@ -3,6 +3,7 @@ from artgraph.graph_splitter import ArtGraphInductiveSplitter
 from artgraph.load_artgraph import ArtGraph
 from src.utils import load_parameters
 import torch
+import json
 
 
 def main():
@@ -15,9 +16,11 @@ def main():
     out_dir = params['out_dir']
     os.makedirs(out_dir, exist_ok=True)
     print('Saving...')
-    for data_set, split in zip(data, ['train_data', 'val_data', 'test_data']):
-        torch.save(data_set, f'{out_dir}/{split}.pt')
-        print(f'{split} saved in {out_dir}/{split}.pt')
+    for (data_set, map_id), split in zip(data, ['train', 'val', 'test']):
+        os.makedirs(f'{out_dir}/{split}', exist_ok=True)
+        torch.save(data_set, f'{out_dir}/{split}/{split}_data.pt')
+        with open(f'{out_dir}/{split}/{split}_map.json', 'w+') as f:
+            json.dump(map_id, f)
     print('Done!')
 
 

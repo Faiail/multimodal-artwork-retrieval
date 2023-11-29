@@ -6,8 +6,6 @@ from copy import deepcopy
 from tqdm import tqdm
 from random import shuffle
 
-import os
-
 
 class ArtGraphInductiveSplitter():
     def __init__(
@@ -72,7 +70,7 @@ class ArtGraphInductiveSplitter():
         central_edge_types = filter(lambda x: x[0] == self.node_split_center, data.metadata()[1])
         for _, (source, _, dest) in tqdm(enumerate(central_edge_types)):
             # take edge list
-            edge_list = pd.DataFrame(data[(source, _, dest)].edge_index.T.cpu().type(torch.LongTensor).numpy())
+            edge_list = pd.DataFrame(data[(source, _, dest)].edge_index.T.cpu().numpy())
             # filter for central nodes
             edge_list = edge_list[edge_list[0].isin(central_nodes.tolist())]
             # set edge list
@@ -97,55 +95,48 @@ class ArtGraphInductiveSplitter():
         map_ids = {
             t: {
                 old_id: new_id
-            } for t in ids.keys()
-            for old_id, new_id in zip(ids[t], range(len(ids[t])))
+                for old_id, new_id in zip(ids[t], range(len(ids[t])))
+            }
+            for t in ids.keys()
         }
-
         # reset relationships
         for (source, _, dest) in data.metadata()[1]:
             edge_list = pd.DataFrame(data[(source, _, dest)].edge_index.T.cpu().numpy())
             edge_list[0] = edge_list[0].map(map_ids[source])
             edge_list[1] = edge_list[1].map(map_ids[dest])
             data[(source, _, dest)].edge_index = torch.from_numpy(edge_list.values).T.contiguous().type(torch.LongTensor)
+            # additional check
+            difference = set(edge_list[0].unique().tolist()).difference(
+                set(
+                    list(range(data[source].x.size(0)))
+                )
+            )
+            if len(difference) != 0:
+                print(f'cannot recognize {source} number {difference}')
+
+            difference = set(edge_list[1].unique().tolist()).difference(
+                set(
+                    list(range(data[dest].x.size(0)))
+                )
+            )
+            if len(difference) != 0:
+                print(f'cannot recognize {dest} number {difference}')
+
 
         # reset features
         for node_type in data.metadata()[0]:
             data[node_type].x = data[node_type].x[ids[node_type]]
-        return data
+        return data, map_ids
 
     def transform(self):
         train_central_nodes, val_central_nodes, test_central_nodes = self.get_split()
         print('Making training split...')
-        train_data = self.transform_split(train_central_nodes)
+        train_data, train_map = self.transform_split(train_central_nodes)
         print('Done!')
         print('Making validation split...')
-        val_data = self.transform_split(val_central_nodes)
+        val_data, val_map = self.transform_split(val_central_nodes)
         print('Done!')
         print('Making test split...')
-        test_data = self.transform_split(test_central_nodes)
+        test_data, test_map = self.transform_split(test_central_nodes)
         print('Done!')
-        return train_data, val_data, test_data
-
-
-if __name__ == '__main__':
-    from src.data.load_artgraph import ArtGraph, LabelEncoder
-    artgraph = ArtGraph(
-        root='../../../data/external/artgraph2bestemotions',
-        vis_feats_root='../../../data/processed/embeddings',
-        label_feats_root='../../../data/processed/label_embeddings',
-        labels=LabelEncoder.OPEN_CLIP,
-    )[0]
-
-    train_data, val_data, test_data = ArtGraphInductiveSplitter(
-        artgraph,
-        node_split_center='artwork',
-        seed=1,
-        stratify='style',
-    ).transform()
-
-    print('Saving...')
-    os.makedirs('../../../data/processed/artgraph_split', exist_ok=True)
-    torch.save(train_data, '../../../data/processed/artgraph_split/train_data.pt')
-    torch.save(val_data, '../../../data/processed/artgraph_split/val_data.pt')
-    torch.save(test_data, '../../../data/processed/artgraph_split/test_data.pt')
-    print('Done!')
+        return (train_data, train_map), (val_data, val_map), (test_data, test_map)
