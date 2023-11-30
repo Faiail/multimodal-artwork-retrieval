@@ -1,5 +1,12 @@
 import yaml
 from safetensors import safe_open
+from ruamel.yaml import YAML
+from pathlib import Path
+
+
+def load_ruamel(path, typ='safe'):
+    yaml = YAML(typ=typ)
+    return yaml.load(Path(path))
 
 
 def load_parameters(file_path):
