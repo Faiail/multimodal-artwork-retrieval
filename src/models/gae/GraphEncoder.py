@@ -19,7 +19,7 @@ class GraphAttentionEncoder(torch.nn.Module):
         self._dropouts = dropouts
         self._add_self_loops = add_self_loops
         self._shared_weights = shared_weights
-        assert num_layers == len(num_heads) == len(dropouts) == len(hidden_channels)
+        assert self._num_layers == len(self._num_heads) == len(self._dropouts) == len(self._hidden_channels)
 
         self._convs = []
 
@@ -68,6 +68,9 @@ class HeteroGraphAttentionEncoder(torch.nn.Module):
         self.source_node = source_node
         self.dest_node = dest_node
         self.final_dimension = final_dimension
+        hidden_channels = hidden_channels if isinstance(hidden_channels, list) else [hidden_channels] * num_layers
+        num_heads = num_heads if isinstance(num_heads, list) else [num_heads] * num_layers
+        dropouts = dropouts if isinstance(dropouts, list) else [dropouts] * num_layers
         self.encoder = GraphAttentionEncoder(
             num_layers=num_layers,
             hidden_channels=hidden_channels,
@@ -77,9 +80,9 @@ class HeteroGraphAttentionEncoder(torch.nn.Module):
             shared_weights=shared_weights,
         )
         self.encoder = pyg.nn.to_hetero(self.encoder, self.metadata)
-        self.source_lin = torch.nn.Linear(hidden_channels[-1], # * num_heads[-1],
+        self.source_lin = torch.nn.Linear(hidden_channels[-1],
                                           self.final_dimension)
-        self.dest_lin = torch.nn.Linear(hidden_channels[-1], # * num_heads[-1],
+        self.dest_lin = torch.nn.Linear(hidden_channels[-1],
                                         self.final_dimension)
 
     def forward(

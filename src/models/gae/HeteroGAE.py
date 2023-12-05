@@ -1,7 +1,7 @@
 import torch_geometric as pyg
 import torch
-from GraphEncoder import HeteroGraphAttentionEncoder
-from HeteroGraphDecoder import HeteroInnerProductDecoder
+from src.models.gae.GraphEncoder import HeteroGraphAttentionEncoder
+from src.models.gae.HeteroGraphDecoder import HeteroInnerProductDecoder
 from sklearn.metrics import average_precision_score, roc_auc_score
 from copy import deepcopy
 
