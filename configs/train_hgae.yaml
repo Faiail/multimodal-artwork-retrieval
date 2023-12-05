@@ -11,7 +11,7 @@ model:
   encoder_num_heads: [1, 2, 4]
   encoder_dropouts: [0.0, 0.2, 0.3]
   encoder_add_self_loops: False
-  encoder_shared_weights: [True, False]
+  encoder_shared_weights: True
   final_dimension: 512
 num_epochs: 300
 optimizer:

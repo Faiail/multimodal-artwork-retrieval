@@ -37,8 +37,10 @@ class Optimizer:
             k: hyperopt.hp.choice(k, v) for k, v in self.params['model'].items() if isinstance(v, list)
         }
 
+    @torch.no_grad
     def test_model(self):
         best_values = {k: self.params['model'][k][v] for k, v in self.best_params.items()}
+        print(f'best model parameters: {best_values}')
         best_model_name = stringfy_params(best_values, 'hgae_')
         model_state_dict = torch.load(f"{self.out_dir}/{best_model_name}")
 
@@ -78,6 +80,7 @@ class Optimizer:
             )
 
     def objective(self, params):
+        torch.cuda.empty_cache()
         start_params = deepcopy(self.params)
         for k, v in params.items():
             start_params['model'][k] = v
@@ -94,24 +97,34 @@ class Optimizer:
         model_name = stringfy_params(params, 'hgae_')
         print(f'saving to:  {model_name}')
         early_stop = EarlyStopping(path=f'{self.out_dir}/{model_name}', **start_params['early_stop'])
-        train_model(
-            model=model,
-            train_data=self.train_data,
-            val_data=self.val_data,
-            num_epochs=num_epochs,
-            scheduler=scheduler,
-            early_stop=early_stop,
-            optimizer=optimizer,
-            verbose=start_params['verbose'],
-            pbar=start_params['pbar'],
-        )
+        try:
+            train_model(
+                model=model,
+                train_data=self.train_data,
+                val_data=self.val_data,
+                num_epochs=num_epochs,
+                scheduler=scheduler,
+                early_stop=early_stop,
+                optimizer=optimizer,
+                verbose=start_params['verbose'],
+                pbar=start_params['pbar'],
+            )
+        except torch.cuda.OutOfMemoryError:
+            print('Experiment failed due to out of memory error')
+            return {
+                'loss': 1e15,
+                'status': hyperopt.STATUS_FAIL,
+            }
 
         # returning best model validation loss
         with torch.no_grad():
             model.load_state_dict(torch.load(early_stop.path))
             z = model.encode(self.val_data.x_dict, self.val_data.edge_index_dict)
             best_model_val_loss = model.recon_loss(z, self.val_data.edge_index_dict)
-        return best_model_val_loss.cpu().item()
+        return {
+            'loss': best_model_val_loss.cpu().item(),
+            'status': hyperopt.STATUS_OK,
+        }
 
     def optimize(self):
         self.best_params = hyperopt.fmin(
@@ -166,7 +179,7 @@ def train_model(
 def main():
     parameters = utils.load_ruamel('../../configs/train_hgae.yaml')
     optimizer = Optimizer(parameters)
-    best = optimizer.optimize()
+    optimizer.optimize()
     optimizer.test_model()
 
 
