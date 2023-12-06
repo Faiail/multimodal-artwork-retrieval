@@ -1,0 +1,4 @@
+mapping_file: ../../data/external/artgraph2bestemotions/mapping
+split_path: ../../data/processed/artgraph_split_open_clip
+out_dir: ../../data/processed/proj
+central_node_type: artwork
