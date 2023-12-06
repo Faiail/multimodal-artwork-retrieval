@@ -1,0 +1,20 @@
+general:
+  source_embedding_dir: ../../data/processed/embeddings
+  dest_embedding_dir: ../../data/processed/complete_embeddings
+  delete: True
+  verbose: True
+model:
+  source_node: artwork
+  dest_node: style
+  rel: hasstyle
+  encoder_num_layers: 1
+  encoder_hidden_channels: 64
+  encoder_num_heads: 4
+  encoder_dropouts: 0.0
+  encoder_add_self_loops: False
+  encoder_shared_weights: True
+  final_dimension: 512
+checkpoint: ../../data/models/hgae/hgae_encoder_dropouts-0__0_encoder_hidden_channels-64_encoder_num_heads-4_encoder_num_layers-1.pt
+mapping_file: ../../data/external/artgraph2bestemotions/mapping/artwork_entidx2name.csv
+data_dir: ../../data/processed/artgraph_split_open_clip
+device: cuda
