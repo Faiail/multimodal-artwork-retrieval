@@ -1,0 +1,58 @@
+model:
+  in_channels: 512
+  out_channels: 512
+  act: relu
+dataset:
+  train:
+    source_modality: image
+    dest_modality: text
+    data_dir: ../../data/processed/complete_embeddings
+    data: ../../data/processed/proj/train.csv
+  val:
+    source_modality: image
+    dest_modality: text
+    data_dir: ../../data/processed/complete_embeddings
+    data: ../../data/processed/proj/val.csv
+  test:
+    source_modality: image
+    dest_modality: text
+    data_dir: ../../data/processed/complete_embeddings
+    data: ../../data/processed/proj/test.csv
+dataloader:
+  shuffle: True
+  drop_last: False
+optimizer:
+  weight_decay: 0.0001
+scheduler:
+  factor: 0.1
+  patience: 2
+early_stop:
+  patience: 10
+  verbose: True
+general:
+  device: cuda
+  num_epochs: 150
+  verbose: False
+  pbar: True
+hyperopt:
+  model__strategy:
+    type: choice
+    range: [0, 1, 2]
+  model__n_layers:
+    type: choice
+    range: [1, 2, 3]
+  model__dropout:
+    type: uniform
+    range: [0.0, 0.5]
+  dataloader__batch_size:
+    type: choice
+    range: [34, 128, 256]
+  optimizer__lr:
+    type: uniform
+    range: [0.0001, 0.001]
+  general__accum_iter:
+    type: choice
+    range: [5, 10, 15]
+n_trials: 20
+out_dir: ../../data/models/feat_proj_image_text
+
