@@ -22,7 +22,7 @@ def train_model(
         'val': val_loader
     }
     model = model.to(device)
-    for epoch in range(num_epochs):
+    for epoch in range(1, num_epochs + 1):
         for phase, loader in loaders.items():
             cumulated_loss = 0.0
             with torch.set_grad_enabled(phase == 'train'):
@@ -52,8 +52,8 @@ def train_model(
                     if early_stop.early_stop:
                         if verbose:
                             print(f'early stopping at epoch {epoch:03d}')
-                        return early_stop.best_score
-    return early_stop.best_score
+                        return -early_stop.best_score
+    return -early_stop.best_score
 
 
 def compute_loss(criterion, dataloader, model, device, pbar):

@@ -58,6 +58,7 @@ class Optimizer:
         return start_params
 
     def objective(self, params):
+        print(f'Making configuration {self.current_run + 1}/{self.params["n_trials"]} with parameters {params}')
         parameters = self.apply_params(params)
         model = FeatureProjector(**parameters['model'])
         train_data = FeatureProjectorDataset(**parameters['dataset']['train'])
@@ -96,12 +97,15 @@ class Optimizer:
             space=self.space,
             algo=hyperopt.tpe.suggest,
             max_evals=self.params['n_trials'],
-            show_progressbar=False,
+            show_progressbar=self.params["progress_bar"],
         )
         return self.best_params
 
     def find_best_model(self):
-        best_values = {k: self.params['model'][k][v] for k, v in self.best_params.items()}
+        best_values = {
+            k: self.params['hyperopt'][k]['range'][v] if self.params['hyperopt'][k]['type'] == 'choice' else v
+            for k, v in self.best_params.items()
+        }
         for f in filter(lambda x: x.endswith('json'), os.listdir(self.params['out_dir'])):
             with open(f"{self.params['out_dir']}/{f}") as json_f:
                 data = json.load(json_f)
@@ -111,7 +115,11 @@ class Optimizer:
 
     @torch.no_grad
     def test_model(self):
-        parameters = self.apply_params(self.best_params)
+        best_values = {
+            k: self.params['hyperopt'][k]['range'][v] if self.params['hyperopt'][k]['type'] == 'choice' else v
+            for k, v in self.best_params.items()
+        }
+        parameters = self.apply_params(best_values)
         test_data = FeatureProjectorDataset(**parameters['dataset']['train'])
         test_loader = DataLoader(dataset=test_data, **parameters['dataloader'])
 
@@ -119,7 +127,7 @@ class Optimizer:
         best_model_id = self.find_best_model()
         out_dir = f"{parameters['out_dir']}"
         model_name = f"{out_dir}/model_{best_model_id}.pt"
-        state_dict = torch.load(f'{model_name}/model.pt')
+        state_dict = torch.load(f'{model_name}')
         model.load_state_dict(state_dict)
         device = parameters['general']['device']
         model = model.to(device)
@@ -134,7 +142,6 @@ class Optimizer:
             pbar=pbar,
         )
 
-        # TODO: remove all models that are not the best
         for f in filter(lambda x: f'_{best_model_id}.' not in x, os.listdir(out_dir)):
             os.remove(f"{out_dir}/{f}")
 

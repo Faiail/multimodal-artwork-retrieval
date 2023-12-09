@@ -26,14 +26,15 @@ optimizer:
 scheduler:
   factor: 0.1
   patience: 2
+  verbose: False
 early_stop:
   patience: 10
-  verbose: True
+  verbose: False
 general:
   device: cuda
   num_epochs: 150
-  verbose: False
-  pbar: True
+  verbose: True
+  pbar: False
 hyperopt:
   model__strategy:
     type: choice
@@ -46,7 +47,7 @@ hyperopt:
     range: [0.0, 0.5]
   dataloader__batch_size:
     type: choice
-    range: [34, 128, 256]
+    range: [128, 256, 512]
   optimizer__lr:
     type: uniform
     range: [0.0001, 0.001]
@@ -55,4 +56,5 @@ hyperopt:
     range: [5, 10, 15]
 n_trials: 20
 out_dir: ../../data/models/feat_proj_image_text
+progress_bar: True
 
