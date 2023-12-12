@@ -1,12 +1,8 @@
-import PIL.Image
 from torch.utils.data import Dataset
 from src.utils import load_tensor
 import pandas as pd
 from enum import Enum
 from PIL import Image
-import torch
-
-from torchvision.transforms import ToPILImage
 
 
 class DataModality(Enum):
