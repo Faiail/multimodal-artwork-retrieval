@@ -8,6 +8,7 @@ import json
 class Columns(Enum):
     ID = 'ID'
     NAME = 'NAME'
+    CAPTION = 'CAPTION'
 
 
 def preprocess_split(mapping_ids, mapping_file, central_node_type):
@@ -15,7 +16,7 @@ def preprocess_split(mapping_ids, mapping_file, central_node_type):
         lambda x: f'{x[:-4]}.safetensors'
     )
     ids = map(int, mapping_ids[central_node_type].keys())
-    return mapping_file.loc[list(ids), [Columns.NAME]]
+    return mapping_file.loc[list(ids), [Columns.NAME, Columns.CAPTION]]
 
 
 def main():
@@ -28,6 +29,11 @@ def main():
         mapping = pd.read_csv(f'{params["mapping_file"]}/{params["central_node_type"]}_entidx2name.csv',
                               header=None,
                               names=[Columns.ID, Columns.NAME])
+        data_captions = pd.read_csv(params['caption_path'], index_col=0)
+        mapping = mapping.merge(data_captions, left_on=Columns.NAME, right_on='name').drop(['name', 'prompt'], axis=1)
+        mapping = mapping.rename(
+            columns={Columns.ID: Columns.ID, Columns.NAME: Columns.NAME, 'caption': Columns.CAPTION}
+        )
         mapped = preprocess_split(
             mapping_ids=map_ids,
             mapping_file=mapping,

@@ -6,17 +6,34 @@ dataset:
   train:
     source_modality: image
     dest_modality: text
-    data_dir: ../../data/processed/complete_embeddings
+    data_source_dir: ../../data/raw/images-resized
+    preprocess_source:
+      RandomHorizontalFlip:
+        p: 0.5
+      RandomPerspective:
+        distortion_scale: 0.6
+        p: 0.5
+    preprocess_dest:
+      SynonymAug:
+        aug_src: wordnet
+        aug_p: 0.2
+      RandomWordAug:
+        action: delete
+        aug_p: 0.2
     data: ../../data/processed/proj/train.csv
   val:
     source_modality: image
     dest_modality: text
-    data_dir: ../../data/processed/complete_embeddings
+    preprocess_source: auto
+    preprocess_dest: auto
+    data_source_dir: ../../data/raw/images-resized
     data: ../../data/processed/proj/val.csv
   test:
     source_modality: image
     dest_modality: text
-    data_dir: ../../data/processed/complete_embeddings
+    data_source_dir: ../../data/raw/images-resized
+    preprocess_source: auto
+    preprocess_dest: auto
     data: ../../data/processed/proj/test.csv
 dataloader:
   shuffle: True
@@ -47,7 +64,7 @@ hyperopt:
     range: [0.0, 0.5]
   dataloader__batch_size:
     type: choice
-    range: [128, 256, 512]
+    range: [32, 64, 128]
   optimizer__lr:
     type: uniform
     range: [0.0001, 0.001]

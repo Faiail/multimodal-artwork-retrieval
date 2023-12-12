@@ -2,13 +2,16 @@ import os
 import torch
 import hyperopt
 from src.models.feature_projector.FeatureProjector import FeatureProjector
-from src.data.FeatureProjectorDataset import FeatureProjectorDataset
+from src.data.FeatureProjectorDataset import FeatureProjectorDataset, DataModality
 from src.models.EarlyStopping import EarlyStopping
 from src.models.feature_projector.utils import train_model, compute_loss
 from src.utils import load_ruamel
 from torch.utils.data import DataLoader
 import json
 import argparse
+from torchvision.transforms import v2
+import nlpaug.augmenter.word as naw
+import open_clip
 
 
 def parse_args():
@@ -34,15 +37,68 @@ def stringfy_model(prefix, params):
     return prefix + '___'.join([f'{k}-{v if isinstance(v, str) else v:.4f}' for k, v in params.items()])
 
 
+def convert_image_preprocess(params):
+    AUGMENTATIONS = [v2.RandomHorizontalFlip, v2.RandomPerspective, v2.RandomRotation]
+    NAMES = list(map(lambda x: x.__name__, AUGMENTATIONS))
+    out = []
+    for entry, val in params.items():
+        if entry in NAMES:
+            out.append(
+                AUGMENTATIONS[NAMES.index(entry)](**val)
+            )
+        else:
+            raise ValueError(f'cannot encode {entry}. Possible data augmentation functions: {NAMES}')
+    return out
+
+
+def convert_text_preprocess(params):
+    AUGMENTATIONS = [naw.SynonymAug, naw.SynonymAug, naw.RandomWordAug]
+    NAMES = list(map(lambda x: x.__name__, AUGMENTATIONS))
+    out = []
+    for entry, val in params.items():
+        if entry in NAMES:
+            out.append(
+                AUGMENTATIONS[NAMES.index(entry)](**val)
+            )
+        else:
+            raise ValueError(f'cannot encode {entry}. Possible data augmentation functions: {NAMES}')
+    return out
+
+
 class Optimizer:
     def __init__(
             self,
             params,
     ):
         self.params = params
+        self._init_augmentations()
         self.space = self._get_space()
         self.best_params = None
-        self.current_run=0
+        self.current_run = 0
+
+    def _init_augmentations(self):
+        for split in self.params['dataset'].keys():
+            dataset_parameters = self.params['dataset'][split]
+            modalities = ['source', 'dest']
+            for t_mod, val_mod in zip(modalities, map(lambda x: dataset_parameters[f'{x}_modality'], modalities)):
+                if dataset_parameters[f'{t_mod}_modality'] == DataModality.IMAGE.value:
+                    _, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+                    if dataset_parameters[f'preprocess_{t_mod}'] != 'auto':
+                        external_augmentations = convert_image_preprocess(dataset_parameters[f'preprocess_{t_mod}'])
+                        for ix, val in (enumerate(external_augmentations)):
+                            preprocess.transforms.insert(4+ix, val)
+                    dataset_parameters[f'preprocess_{t_mod}'] = preprocess
+                if dataset_parameters[f'{t_mod}_modality'] == DataModality.TEXT.value:
+                    if dataset_parameters[f'preprocess_{t_mod}'] == 'auto':
+                        preprocess = None
+                    else:
+                        preprocess = convert_text_preprocess(dataset_parameters[f'preprocess_{t_mod}'])
+                    dataset_parameters[f'preprocess_{t_mod}'] = {
+                        'preprocess': preprocess,
+                        'tokenizer': open_clip.get_tokenizer('ViT-B-32')
+                    }
+            self.params['dataset'][split] = dataset_parameters
+        return dataset_parameters
 
     def _get_space(self):
         to_optimize = self.params['hyperopt']
@@ -79,7 +135,6 @@ class Optimizer:
         criterion = torch.nn.SmoothL1Loss()  # maybe add parameters for criterion
 
         self.current_run += 1
-
         return train_model(
             model=model,
             train_loader=train_loader,
