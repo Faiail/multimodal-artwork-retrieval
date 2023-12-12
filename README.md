@@ -57,13 +57,35 @@ Project Organization
 # USEFUL COMMANDS
 * IMAGE TEXT FEATURE EXTRACTION:
 ```
-cd src/features
-python extract_images_text_feats.py
+python -m src.features.extract_images_text_feats
 ```
 * DOWNLOADING ARTGRAPH RAW DATA:
 ```
-cd src/data
-python download_artgraph.py
+python -m src.data.download_artgraph
 ```
 
+* EXTRACT LABEL FEATS
+```
+python -m src.features.extract_label_feats
+```
+
+* SPLIT ARTFGRAPH
+```
+python -m src.data.split_artgraph
+```
+
+* TRAIN HGAE
+```
+python -m src.models.train_hgae
+```
+
+* EXTRACT GRAPH FEATURES AND MERGE WITH IMAGE AND TEXT FEATURES
+```
+python -m src.features.extract_graph_and_merge
+```
+
+* TRAIN IMAGE-TEXT PROJECTOR
+```
+python -m src.models.train_feature_projector --params_path configs/train_img_text_proj.yaml
+```
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
