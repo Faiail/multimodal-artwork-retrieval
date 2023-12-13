@@ -44,9 +44,10 @@ class FeatureProjectorDataset(Dataset):
                 self.preprocess_source.get('preprocess', None),
                 self.preprocess_source.get('tokenizer', None),
             )
-            for step in preprocess:
-                x = step(x)
-            x = tokenizer(x).squeeze(-1)
+            if preprocess:
+                for step in preprocess:
+                    x = step(x)
+            x = tokenizer(x).squeeze(dim=0)
         elif self.source_modality == DataModality.GRAPH.value:
             x = load_tensor(
                 file=f'{self.data_source_dir}/{self.data.iloc[item, 0]}',
@@ -67,8 +68,9 @@ class FeatureProjectorDataset(Dataset):
                 self.preprocess_dest.get('preprocess', None),
                 self.preprocess_dest.get('tokenizer', None),
             )
-            for step in preprocess:
-                y = step.augment(y)
+            if preprocess:
+                for step in preprocess:
+                    y = step.augment(y)
             y = tokenizer(y).squeeze(dim=0)
         elif self.dest_modality == DataModality.GRAPH.value:
             y = load_tensor(
