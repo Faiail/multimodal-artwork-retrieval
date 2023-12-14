@@ -33,10 +33,6 @@ def save_params(path, params):
         json.dump(params, f)
 
 
-def stringfy_model(prefix, params):
-    return prefix + '___'.join([f'{k}-{v if isinstance(v, str) else v:.4f}' for k, v in params.items()])
-
-
 def convert_image_preprocess(params):
     AUGMENTATIONS = [v2.RandomHorizontalFlip, v2.RandomPerspective, v2.RandomRotation]
     NAMES = list(map(lambda x: x.__name__, AUGMENTATIONS))
@@ -75,28 +71,36 @@ class Optimizer:
         self.space = self._get_space()
         self.best_params = None
         self.current_run = 0
+        self._clean_out_dir()
+
+    def _clean_out_dir(self):
+        for f in os.listdir(self.params['out_dir']):
+            os.remove(f'{self.params["out_dir"]}/{f}')
 
     def _init_augmentations(self):
-        for split in self.params['dataset'].keys():
-            dataset_parameters = self.params['dataset'][split]
-            modalities = ['source', 'dest']
-            for t_mod, val_mod in zip(modalities, map(lambda x: dataset_parameters[f'{x}_modality'], modalities)):
-                if dataset_parameters[f'{t_mod}_modality'] == DataModality.IMAGE.value:
-                    _, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-                    if dataset_parameters[f'preprocess_{t_mod}'] != 'auto':
-                        external_augmentations = convert_image_preprocess(dataset_parameters[f'preprocess_{t_mod}'])
-                        for ix, val in (enumerate(external_augmentations)):
-                            preprocess.transforms.insert(4+ix, val)
-                    dataset_parameters[f'preprocess_{t_mod}'] = preprocess
-                if dataset_parameters[f'{t_mod}_modality'] == DataModality.TEXT.value:
-                    if dataset_parameters[f'preprocess_{t_mod}'] == 'auto':
-                        preprocess = None
-                    else:
-                        preprocess = convert_text_preprocess(dataset_parameters[f'preprocess_{t_mod}'])
-                    dataset_parameters[f'preprocess_{t_mod}'] = {
-                        'preprocess': preprocess,
-                        'tokenizer': open_clip.get_tokenizer('ViT-B-32')
-                    }
+        for split in self.params['dataset'].keys():  # for each split
+            dataset_parameters = self.params['dataset'][split]  # take params
+            if 'preprocess_source' not in dataset_parameters:  # if no preprocess (val-test) continue
+                assert dataset_parameters['mode'] == 'embedding'
+                continue
+            # handle image preprocessing
+            if dataset_parameters[f'source_modality'] == DataModality.IMAGE.value:
+                _, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+                if dataset_parameters[f'preprocess_source'] != 'auto':
+                    external_augmentations = convert_image_preprocess(dataset_parameters[f'preprocess_source'])
+                    for ix, val in (enumerate(external_augmentations)):
+                        preprocess.transforms.insert(4 + ix, val)
+                dataset_parameters[f'preprocess_source'] = preprocess
+            # handle text preprocessing
+            if dataset_parameters[f'source_modality'] == DataModality.TEXT.value:
+                if dataset_parameters[f'preprocess_source'] == 'auto':
+                    preprocess = None
+                else:
+                    preprocess = convert_text_preprocess(dataset_parameters[f'preprocess_source'])
+                dataset_parameters[f'preprocess_source'] = {
+                    'preprocess': preprocess,
+                    'tokenizer': open_clip.get_tokenizer('ViT-B-32')
+                }
             self.params['dataset'][split] = dataset_parameters
         return dataset_parameters
 
@@ -210,7 +214,7 @@ class Optimizer:
 
 def main():
     param_file = '../../configs/train_img_text_proj.yaml'
-    #param_file = parse_args().params_path
+    # param_file = parse_args().params_path
     optimizer = Optimizer(params=load_ruamel(param_file))
     optimizer.optimize()
     optimizer.test_model()
