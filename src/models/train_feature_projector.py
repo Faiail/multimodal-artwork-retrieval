@@ -74,6 +74,7 @@ class Optimizer:
         self._clean_out_dir()
 
     def _clean_out_dir(self):
+        os.makedirs(self.params['out_dir'], exist_ok=True)
         for f in os.listdir(self.params['out_dir']):
             os.remove(f'{self.params["out_dir"]}/{f}')
 

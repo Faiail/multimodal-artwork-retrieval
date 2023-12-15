@@ -31,7 +31,7 @@ class FeatureProjectorDataset(Dataset):
             max_retry=3,
     ):
         super().__init__()
-        self.mode=mode
+        self.mode = mode
         self.source_modality = source_modality
         self.dest_modality = dest_modality
         self.data = pd.read_csv(data)
@@ -66,7 +66,7 @@ class FeatureProjectorDataset(Dataset):
             )
             if preprocess:
                 for step in preprocess:
-                    x = step(x)
+                    x = step.augment(x)
             x = tokenizer(x).squeeze(dim=0)
         elif self.source_modality == DataModality.GRAPH.value:
             x = load_tensor(
