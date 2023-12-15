@@ -6,8 +6,8 @@ dataset:
   train:
     source_modality: image
     dest_modality: text
-    data_source_dir: ../../data/raw/images-resized
-    data_dest_dir: ../../data/processed/complete_embeddings
+    data_source_dir: data/raw/images-resized
+    data_dest_dir: data/processed/complete_embeddings
     mode: raw
     preprocess_source:
       RandomHorizontalFlip:
@@ -15,21 +15,21 @@ dataset:
       RandomPerspective:
         distortion_scale: 0.6
         p: 0.5
-    data: ../../data/processed/proj/train.csv
+    data: data/processed/proj/train.csv
   val:
     source_modality: image
     dest_modality: text
     mode: embedding
-    data_source_dir: ../../data/processed/complete_embeddings
-    data_dest_dir: ../../data/processed/complete_embeddings
-    data: ../../data/processed/proj/val.csv
+    data_source_dir: data/processed/complete_embeddings
+    data_dest_dir: data/processed/complete_embeddings
+    data: data/processed/proj/val.csv
   test:
     mode: embedding
     source_modality: image
     dest_modality: text
-    data_source_dir: ../../data/processed/complete_embeddings
-    data_dest_dir: ../../data/processed/complete_embeddings
-    data: ../../data/processed/proj/test.csv
+    data_source_dir: data/processed/complete_embeddings
+    data_dest_dir: data/processed/complete_embeddings
+    data: data/processed/proj/test.csv
 dataloader:
   shuffle: True
   drop_last: False
@@ -67,6 +67,6 @@ hyperopt:
     type: choice
     range: [5, 10, 15]
 n_trials: 20
-out_dir: ../../data/models/feat_proj_image_text
+out_dir: data/models/feat_proj_image_text
 progress_bar: True
 

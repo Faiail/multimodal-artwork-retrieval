@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -49,6 +51,16 @@ def train_model(
 
                     out = model(x)
                     loss = criterion(out, y)
+
+                    if torch.isnan(loss.cpu()).any():
+                        os.makedirs('./test/', exists_ok=True)
+                        torch.save(model.state_dict(), './test/model.pt')
+                        torch.save(x, './test/x.pt')
+                        torch.save(y, './test/y.pt')
+                        torch.save(torch.as_tensor(cumulated_loss), './test/cumulated_loss.pt')
+                        exit()
+
+
                     cumulated_loss = cumulated_loss + loss.cpu().item()
                     if phase == 'train':
                         loss = loss / accum_iter
@@ -66,7 +78,6 @@ def train_model(
                     if early_stop.early_stop:
                         if verbose:
                             print(f'early stopping at epoch {epoch:03d}')
-                        input()
                         return -early_stop.best_score
     return -early_stop.best_score
 
@@ -80,14 +91,6 @@ def compute_loss(criterion, dataloader, model, device, pbar):
     for x, y in dataloader:
         x = x.to(device)
         y = y.to(device)
-
-        x, y = feat_extract(
-            x=x,
-            y=y,
-            backbone=backbone,
-            source_modality=dataloader.dataset.source_modality,
-            dest_modality=dataloader.dataset.dest_modality,
-        )
 
         out = model(x)
         running_loss = running_loss + criterion(out, y).item()

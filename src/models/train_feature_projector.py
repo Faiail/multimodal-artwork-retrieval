@@ -86,10 +86,11 @@ class Optimizer:
             # handle image preprocessing
             if dataset_parameters[f'source_modality'] == DataModality.IMAGE.value:
                 _, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+                preprocess.transforms.pop(2)  # remove rgb conversion
                 if dataset_parameters[f'preprocess_source'] != 'auto':
                     external_augmentations = convert_image_preprocess(dataset_parameters[f'preprocess_source'])
-                    for ix, val in (enumerate(external_augmentations)):
-                        preprocess.transforms.insert(4 + ix, val)
+                    for val in (external_augmentations):
+                        preprocess.transforms.insert(-1, val)
                 dataset_parameters[f'preprocess_source'] = preprocess
             # handle text preprocessing
             if dataset_parameters[f'source_modality'] == DataModality.TEXT.value:
@@ -213,8 +214,7 @@ class Optimizer:
 
 
 def main():
-    param_file = '../../configs/train_img_text_proj.yaml'
-    # param_file = parse_args().params_path
+    param_file = parse_args().params_path
     optimizer = Optimizer(params=load_ruamel(param_file))
     optimizer.optimize()
     optimizer.test_model()

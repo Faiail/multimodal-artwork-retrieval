@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 from src.utils import load_tensor
 import pandas as pd
@@ -27,6 +28,7 @@ class FeatureProjectorDataset(Dataset):
             data_dest_dir=None,
             preprocess_source=None,
             preprocess_dest=None,
+            max_retry=3,
     ):
         super().__init__()
         self.mode=mode
@@ -37,6 +39,7 @@ class FeatureProjectorDataset(Dataset):
         self.data_dest_dir = data_dest_dir
         self.preprocess_source = preprocess_source
         self.preprocess_dest = preprocess_dest
+        self.max_retry = max_retry
 
     def __get_source(self, item):
         if self.mode == Mode.EMBEDDING.value:
@@ -48,9 +51,13 @@ class FeatureProjectorDataset(Dataset):
         fname = self.data.iloc[item, 0]
         if self.source_modality == DataModality.IMAGE.value:
             image_fname = fname.split('.')[0] + '.jpg'
-            x = Image.open(f'{self.data_source_dir}/{image_fname}')
+            img = Image.open(f'{self.data_source_dir}/{image_fname}').convert('RGB')
             if self.preprocess_source:
-                x = self.preprocess_source(x)
+                for t in range(self.max_retry):
+                    x = self.preprocess_source(img)
+                    if not torch.isnan(x).any():
+                        break
+            assert not torch.isnan(x).any(), f"nan value at {item}th row"
         elif self.source_modality == DataModality.TEXT.value:
             x = self.data.iloc[item, 1]
             preprocess, tokenizer = (
