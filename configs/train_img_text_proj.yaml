@@ -44,7 +44,7 @@ early_stop:
   verbose: False
 general:
   device: cuda
-  num_epochs: 150
+  num_epochs: 100
   verbose: True
   pbar: False
 hyperopt:

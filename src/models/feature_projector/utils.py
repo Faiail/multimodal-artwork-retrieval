@@ -83,11 +83,7 @@ def train_model(
 
 
 def compute_loss(criterion, dataloader, model, device, pbar):
-    running_loss = 0.0
-    backbone, _, _ = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-    backbone = backbone.to(device)
-    for p in backbone.parameters():
-        p.requires_grad = False
+    running_loss = 0.
     for x, y in dataloader:
         x = x.to(device)
         y = y.to(device)
