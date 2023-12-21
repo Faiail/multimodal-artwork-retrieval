@@ -1,0 +1,15 @@
+scorer:
+  uri: bolt://localhost:7687
+  user: neo4j
+  pwd: admin
+  db: ret
+  node_t: Artwork
+  save: True
+  out_dir: data/interim/scorer/train
+mapping_file: data/processed/proj/train.csv
+general:
+  mode: random
+  split: train
+  num_couples: 10_000_000
+  out_dir: data/processed/scores/
+  seed: 1
