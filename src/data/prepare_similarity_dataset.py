@@ -12,9 +12,10 @@ tqdm.pandas()
 
 
 class Couple:
-    def __init__(self, a, b):
+    def __init__(self, a, b, score):
         self.a = a
         self.b = b
+        self.score = score
 
     def __eq__(self, other):
         return (self.a == other.a and self.b == other.b) or (self.a == other.b and self.b == other.a)
@@ -23,21 +24,7 @@ class Couple:
         return hash(self.a + self.b) + hash(abs(self.a - self.b))
 
     def __repr__(self):
-        return f'Couple({self.a}, {self.b})'
-
-
-def generate_random_couples(len_data, num_couples, seed):
-    # TODO: the couples must include all self couples e.g. (x, x)
-    #  some couples (x, y) that are similar and others (x, y) that are not
-    couples = set()
-    random.seed(seed)
-    for _ in tqdm(range(num_couples)):
-        current_len = len(couples)
-        while current_len == len(couples):
-            x = Couple(random.randint(0, len_data), random.randint(0, len_data))
-            couples.add(x)
-    couples = list(couples)
-    return list(map(lambda x: (x.a, x.b), couples))
+        return f'Couple({self.a}, {self.b}, {self.score})'
 
 
 def generate_complete_couples(len_data, step):
@@ -60,10 +47,28 @@ def generate_complete_scores(iterator, scorer, data):
         yield df
 
 
-def generate_random_scores(iterator, data, scorer):
-    df = pd.DataFrame(iterator, columns=['artwork_a', 'artwork_b'])
-    df['score'] = df.progress_apply(lambda x: scorer.compute_score(data[x[0]], data[x[1]]), axis=1)
-    return df
+def generate_random_scores(data, scorer, max_entries_per_category):
+    # couples = {Couple(x, x, 1.0) for x in range(len(data))}
+    couples = set()
+    positive = {}
+    for ix, artwork in enumerate(tqdm(data)):
+        sim_len, dis_len = 0, 0
+        for y in iter(random.sample(range(len(data)), len(data))):
+            if sim_len == max_entries_per_category == dis_len:
+                break
+            cur_len = len(couples)
+            score = scorer.compute_score(data[ix], data[y])
+            if score < 0.5:
+                if dis_len < max_entries_per_category:
+                    couples.add(Couple(ix, y, score))
+                    dis_len += len(couples) - cur_len
+            else:
+                if sim_len < max_entries_per_category:
+                    couples.add(Couple(ix, y, score))
+                    sim_len += len(couples) - cur_len
+                    positive[ix] = positive.get(ix, 0) + (len(couples) - cur_len)
+    return pd.DataFrame(list(map(lambda x: (x.a, x.b, x.score), couples)),
+                        columns=['artwork_a', 'artwork_b', 'score'])
 
 
 def generate_scores(
@@ -73,13 +78,13 @@ def generate_scores(
         split,
         out_dir,
         step=None,
-        num_couples=None,
         seed=None,
+        max_entries_per_category=None,
 ):
     os.makedirs(f'{out_dir}/{split}', exist_ok=True)
     if mode == 'random':
-        couples = generate_random_couples(len(data) - 1, num_couples, seed)
-        scores = generate_random_scores(iterator=couples, scorer=scorer, data=data)
+        random.seed(seed)
+        scores = generate_random_scores(scorer=scorer, data=data, max_entries_per_category=max_entries_per_category)
         scores.to_csv(f'{out_dir}/{split}/data.csv')
     elif mode == 'complete':
         couples = generate_complete_couples(len(data), step)

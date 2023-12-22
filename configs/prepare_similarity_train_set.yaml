@@ -10,6 +10,6 @@ mapping_file: data/processed/proj/train.csv
 general:
   mode: random
   split: train
-  num_couples: 10_000_000
+  max_entries_per_category: 3
   out_dir: data/processed/scores/
   seed: 1

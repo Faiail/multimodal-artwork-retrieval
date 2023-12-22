@@ -10,6 +10,6 @@ mapping_file: data/processed/proj/val.csv
 general:
   mode: random
   split: val
-  num_couples: 100_000
+  max_entries_per_category: 3
   out_dir: data/processed/scores/
   seed: 1
