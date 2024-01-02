@@ -48,7 +48,7 @@ def generate_complete_scores(iterator, scorer, data):
 
 
 def generate_random_scores(data, scorer, max_entries_per_category):
-    # couples = {Couple(x, x, 1.0) for x in range(len(data))}
+    couples = {Couple(x, x, 1.0) for x in range(len(data))}
     couples = set()
     positive = {}
     for ix, artwork in enumerate(tqdm(data)):
