@@ -59,9 +59,8 @@ class ArtworkSiameseNetwork(torch.nn.Module):
 
         return torch.nn.Sequential(*model)
 
-    def forward(self, *args):
-        a, b = args
-        fused_a = self.fusion_module(*a)
-        fused_b = self.fusion_module(*b)
+    def forward(self, x1, x2):
+        fused_a = self.fusion_module(*x1)
+        fused_b = self.fusion_module(*x2)
         shared = torch.cat([fused_a, fused_b])
         return self.model(shared)
