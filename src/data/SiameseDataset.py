@@ -5,22 +5,7 @@ from PIL import Image
 import pandas as pd
 import torch
 from src.utils import load_tensor
-
-
-class DataModality(Enum):
-    IMAGE = 'image'
-    TEXT = 'text'
-    GRAPH = 'graph'
-
-
-class Mode(Enum):
-    EMBEDDING = 'embedding'
-    RAW = 'raw'
-
-
-class Score(Enum):
-    DISCRETE = 'discrete'
-    REAL = 'real'
+from utils import DataModality, Mode, Score
 
 
 class SiameseDataset(Dataset):
@@ -31,17 +16,19 @@ class SiameseDataset(Dataset):
             data_dirs: Dict[str, str],
             dataset: pd.DataFrame,
             names: pd.DataFrame,
-            preprocess: Dict[str, Any],
             score_strategy: str,
+            preprocess=None,
             max_retry: int = 3,
     ) -> None:
         super().__init__()
+        if preprocess is None:
+            preprocess = dict()
         self.modalities = modalities
         self.mode = mode
         self.data_dirs = data_dirs
         self.dataset = dataset
         self.names = names
-        self.preprocess = preprocess
+        self.preprocess = preprocess if preprocess else {}
         self.score_strategy = score_strategy
         self.max_retry = max_retry
 
