@@ -72,13 +72,10 @@ class SiameseDataset(Dataset):
                     index_col=0,
                 )
             x = self.data_dirs[DataModality.TEXT.value].loc[fname].tolist()[0]
-            main_preprocess = self.preprocess.get(DataModality.TEXT.value, None)
-            preprocess = main_preprocess.get('preprocess', None)
-            tokenizer = main_preprocess.get('tokenizer', None)
+            preprocess = self.preprocess.get(DataModality.TEXT.value, None)
             if preprocess:
                 for step in preprocess:
                     x = step.augment(x)
-            x = tokenizer(x).squeeze(dim=0)
             return x
         return load_tensor(
             file=f'{self.data_dirs[DataModality.TEXT.value]}/{fname}',
