@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset
-from enum import Enum
 from typing import List, Any, Dict
 from PIL import Image
 import pandas as pd
