@@ -1,6 +1,23 @@
 import os
 from safetensors.torch import save_file
 import pandas as pd
+from enum import Enum
+
+
+class DataModality(Enum):
+    IMAGE = 'image'
+    TEXT = 'text'
+    GRAPH = 'graph'
+
+
+class Mode(Enum):
+    EMBEDDING = 'embedding'
+    RAW = 'raw'
+
+
+class Score(Enum):
+    DISCRETE = 'discrete'
+    REAL = 'real'
 
 
 def save_embeddings(tensor, file_path):
