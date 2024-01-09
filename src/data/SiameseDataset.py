@@ -4,7 +4,7 @@ from PIL import Image
 import pandas as pd
 import torch
 from src.utils import load_tensor
-from utils import DataModality, Mode, Score
+from src.data.utils import DataModality, Mode, Score
 
 
 class SiameseDataset(Dataset):
@@ -25,8 +25,8 @@ class SiameseDataset(Dataset):
         self.modalities = modalities
         self.mode = mode
         self.data_dirs = data_dirs
-        self.dataset = dataset
-        self.names = names
+        self.dataset = dataset if isinstance(dataset, pd.DataFrame) else pd.read_csv(dataset, index_col=0)
+        self.names = names if isinstance(dataset, pd.DataFrame) else pd.read_csv(names)
         self.preprocess = preprocess if preprocess else {}
         self.score_strategy = score_strategy
         self.max_retry = max_retry
