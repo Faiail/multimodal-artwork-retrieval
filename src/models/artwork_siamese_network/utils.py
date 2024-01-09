@@ -36,22 +36,22 @@ def train_model(
                 iter_loader = tqdm(loader) if pbar else loader
                 for step, data_dict in enumerate(iter_loader):
                     score = data_dict.pop("score")
-                    score = score.to(device)
+                    score = score.float().to(device)
 
                     with torch.no_grad():
                         for k, d in data_dict.items():
                             for data_t, tensor in d.items():
                                 if loader.dataset.mode[data_t] == Mode.RAW.value:
                                     if data_t == DataModality.IMAGE.value:
-                                        data_dict[k][data_t] = backbone.encode_image(tensor)
+                                        data_dict[k][data_t] = backbone.encode_image(tensor.to(device))
                                     elif data_t == DataModality.TEXT.value:
-                                        tokens = tokenizer.tokenize(tensor)
-                                        data_dict[k][data_t] = backbone.encode_text(tokens)
+                                        tokens = tokenizer(tensor[0])
+                                        data_dict[k][data_t] = backbone.encode_text(tokens.to(device))
                                 data_dict[k][data_t] = data_dict[k][data_t].to(device)
-                    x = tuple(data_dict["x"].items())
-                    y = tuple(data_dict["y"].items())
+                    x = tuple(data_dict["x"].values())
+                    y = tuple(data_dict["y"].values())
 
-                    out = model(x, y)
+                    out = model(x, y).squeeze()
                     loss = criterion(out, score)
 
                     cumulated_loss = cumulated_loss + loss.cpu().item()

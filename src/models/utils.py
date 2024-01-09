@@ -22,7 +22,7 @@ def parse_args():
 def convert_image_preprocess(params):
     AUGMENTATIONS = v2.__dict__
     out = []
-    for entry, val in params.item():
+    for entry, val in params.items():
         out.append(
             AUGMENTATIONS[entry](**val)
         )
@@ -32,7 +32,7 @@ def convert_image_preprocess(params):
 def convert_text_preprocess(params):
     AUGMENTATIONS = naw.__dict__
     out = []
-    for entry, val in params.item():
+    for entry, val in params.items():
         out.append(
             AUGMENTATIONS[entry](**val)
         )

@@ -60,5 +60,5 @@ class ArtworkSiameseNetwork(torch.nn.Module):
     def forward(self, x1, x2):
         fused_a = self.fusion_module(*x1)
         fused_b = self.fusion_module(*x2)
-        shared = torch.cat([fused_a, fused_b])
+        shared = torch.cat([fused_a, fused_b], dim=-1)
         return self.model(shared)
