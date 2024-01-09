@@ -43,7 +43,7 @@ class ArtworkSiameseNetwork(torch.nn.Module):
         raise ValueError(f'Strategy must be in {[Strategy.SAME, Strategy.DOUBLE, Strategy.DOUBLE]}')
 
     def _init_model(self):
-        in_channels = self.model_in_channels
+        in_channels = self.model_in_channels * 2
         model = []
         for _ in range(self.num_layers):
             model.append(
