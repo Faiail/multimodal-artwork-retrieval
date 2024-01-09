@@ -88,4 +88,19 @@ python -m src.features.extract_graph_and_merge
 ```
 python -m src.models.train_feature_projector --params_path configs/train_img_text_proj.yaml
 ```
+*N.B.* To train a different feature projector, please change the parameters file (e.g. see ./configs/ directory)
+
+* PREPARE SIAMESE DATASET
+```
+python -m src.data.prepare_similarity_dataset --params_path configs/prepare_similarity_train_set.yaml
+python -m src.data.prepare_similarity_dataset --params_path configs/prepare_similarity_val_set.yaml
+python -m src.data.prepare_similarity_dataset --params_path configs/prepare_similarity_test_set.yaml
+```
+
+* TRAIN SIAMESE NETWORK
+```
+python -m src.models.train_siamese_network --params_path configs/train_siamese_network.yaml
+```
+
+
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
