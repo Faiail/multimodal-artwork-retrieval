@@ -12,13 +12,11 @@ class ArtworkSiameseNetwork(torch.nn.Module):
             fusion_out_channels,
             fusion_num_heads,
             dropout,
-            hidden_channels,
             strategy,
             num_layers,
     ):
         super().__init__()
         self.model_in_channels = fusion_out_channels
-        self.hidden_channels = hidden_channels
         self.strategy = strategy
         self.num_layers = num_layers
         self.dropout = dropout
