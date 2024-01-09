@@ -1,15 +1,15 @@
 import torch
-from torch.nn.modules.loss import _WeightedLoss
 from torchvision.ops import sigmoid_focal_loss
 
 
-class BinaryFocalLoss(_WeightedLoss):
+class BinaryFocalLoss(torch.nn.Module):
     def __init__(
             self,
             alpha: float = 0.25,
             gamma: float = 2,
             reduction: str = 'none',
     ):
+        super().__init__()
         self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
