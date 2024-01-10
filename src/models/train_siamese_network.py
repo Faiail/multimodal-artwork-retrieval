@@ -43,7 +43,6 @@ class Optimizer(BaseOptimizer):
         parameters = self.apply_params(params)
         model = ArtworkSiameseNetwork(**parameters["model"])
 
-
         train_data = SiameseDataset(**parameters["dataset"]["train"])
         train_loader = DataLoader(dataset=train_data, **parameters["dataloader"])
 
