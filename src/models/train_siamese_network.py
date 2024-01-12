@@ -61,6 +61,8 @@ class Optimizer(BaseOptimizer):
         early_stop = EarlyStopping(path=f'{model_dir}/model_{self.current_run}.pt', **parameters['early_stop'])
 
         backbone, _, _ = open_clip.create_model_and_transforms(**parameters["backbone"])
+        for p in backbone.parameters():
+            p.requires_grad = False
         del _
         tokenizer = open_clip.get_tokenizer(**parameters["tokenizer"])
 
