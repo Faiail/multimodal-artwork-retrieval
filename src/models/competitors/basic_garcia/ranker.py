@@ -1,0 +1,74 @@
+import torch
+from torchvision.models import ResNet
+from sklearn.feature_extraction.text import TfidfVectorizer
+from typing import List
+
+
+class TfidfEncoder(TfidfVectorizer):
+    def __init__(
+            self,
+            max_features=None,
+            stop_words=None,
+    ):
+        super().__init__(max_features=max_features, stop_words=stop_words)
+
+    @property
+    def vector_size(self):
+        return len(self.get_feature_names_out())
+
+
+class Ranker(torch.nn.Module):
+    def __init__(
+            self,
+            hidden_dim: int,
+            resnet: ResNet,
+            comment_tf_idf_vectorizer: TfidfEncoder,
+            title_tf_idf_vectorizer: TfidfEncoder,
+            frozen: bool = True,
+    ):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.comment_tf_idf_vectorizer = comment_tf_idf_vectorizer
+        self.title_tf_idf_vectorizer = title_tf_idf_vectorizer
+        self.frozen = frozen
+
+        image_projector = torch.nn.Linear(
+            in_features=resnet.fc.in_features,
+            out_features=self.hidden_dim
+        )
+        resnet = torch.nn.Sequential(*list(resnet.children())[:-1])
+        if self.frozen:
+            for p in resnet.parameters():
+                p.requires_grad = False
+        self.image_encoder = torch.nn.Sequential(*[
+            resnet,
+            image_projector,
+            torch.nn.Tanh(),
+            torch.nn.LayerNorm(hidden_dim),
+        ])
+
+        text_projector = torch.nn.Linear(
+            in_features=self.comment_tf_idf_vectorizer.vector_size + self.title_tf_idf_vectorizer.vector_size,
+            out_features=self.hidden_dim
+        )
+
+        self.text_encoder = torch.nn.Sequential(*[
+            text_projector,
+            torch.nn.Tanh(),
+            torch.nn.LayerNorm(hidden_dim),
+        ])
+
+    def encode_text(self, raw_comment: List[str], raw_title) -> torch.Tensor:
+        x_t = self.title_tf_idf_vectorizer.transform(raw_title)
+        x_t = torch.as_tensor(x_t, device=self.device, dtype=torch.float)
+        x_c = self.comment_tf_idf_vectorizer.transform(raw_comment)
+        x_c = torch.as_tensor(x_c, device=self.device, dtype=torch.float)
+        x = torch.cat([x_c, x_t], dim=1)
+        return self.text_encoder(x)
+
+    def encode_image(self, images: torch.Tensor) -> torch.Tensor:
+        return self.image_encoder(images)
+
+    def forward(self, images, comments, titles):
+        return self.encode_image(images), self.encode_text(comments, titles)
+

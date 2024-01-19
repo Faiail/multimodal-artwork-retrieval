@@ -1,0 +1,52 @@
+model:
+  hidden_dim: 128
+  frozen: True
+  resnet:
+    pretrained: True
+  comment_tf_idf_vectorizer:
+    train_data: &train_corpus data/processed/proj/train.csv # sure to be modified
+    key: caption
+    params:
+      max_features: 3000
+      stop_words: english
+  title_tf_idf_vectorizer:
+    train_data: *train_corpus
+    key: title
+    params:
+      stop_words: english
+dataset:
+  train:
+    image_dir: &img_dir data/raw/images-resized
+    dataset: data/processed/scores/train/data.csv
+    names: *train_corpus
+    preprocess:
+      ToTensor: None
+      RandomHorizontalFlip:
+        p: 0.5
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: &norm_mean (0.48145466, 0.4578275, 0.40821073)
+        std: &norm_std (0.26862954, 0.26130258, 0.27577711)
+  val:
+    image_dir: *img_dir
+    dataset: data/processed/scores/val/data.csv
+    names: data/processed/proj/val.csv
+    preprocess:
+      ToTensor: None
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: *norm_mean
+        std: *norm_std
+optimizer:
+  lr: 1e-4
+criterion:
+  margin: 0.1
+out_dir: data/models/competitors/basic_garcia
+early_stop:
+  patience: 5
+  verbose: False
+general:
+  num_epochs: 30
+  device: cuda
