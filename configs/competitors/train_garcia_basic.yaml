@@ -4,7 +4,7 @@ model:
   resnet:
     pretrained: True
   comment_tf_idf_vectorizer:
-    train_data: &train_corpus data/processed/proj/train.csv # sure to be modified
+    train_data: &train_corpus data/processed/garcia_basic/train.csv
     key: caption
     params:
       max_features: 3000
@@ -31,7 +31,7 @@ dataset:
   val:
     image_dir: *img_dir
     dataset: data/processed/scores/val/data.csv
-    names: data/processed/proj/val.csv
+    names: data/processed/garcia_basic/val.csv
     preprocess:
       ToTensor: None
       CenterCrop:
@@ -39,6 +39,11 @@ dataset:
       Normalize:
         mean: *norm_mean
         std: *norm_std
+dataloader:
+  batch_size: 32
+  num_workers: 16
+  drop_last: False
+  shuffle: True
 optimizer:
   lr: 1e-4
 criterion:
