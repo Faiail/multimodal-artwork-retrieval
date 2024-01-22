@@ -1,7 +1,8 @@
 import torch
 from torchvision.models import ResNet
 from sklearn.feature_extraction.text import TfidfVectorizer
-from typing import List
+from typing import List, Union
+import joblib
 
 
 class TfidfEncoder(TfidfVectorizer):
@@ -17,19 +18,25 @@ class TfidfEncoder(TfidfVectorizer):
         return len(self.get_feature_names_out())
 
 
+def get_text_encoder(instance):
+    if isinstance(instance, TfidfEncoder):
+        return instance
+    return joblib.load(instance)
+
+
 class Ranker(torch.nn.Module):
     def __init__(
             self,
             hidden_dim: int,
             resnet: ResNet,
-            comment_tf_idf_vectorizer: TfidfEncoder,
-            title_tf_idf_vectorizer: TfidfEncoder,
+            comment_tf_idf_vectorizer: Union[TfidfEncoder, str],
+            title_tf_idf_vectorizer: Union[TfidfEncoder, str],
             frozen: bool = True,
     ):
         super().__init__()
         self.hidden_dim = hidden_dim
-        self.comment_tf_idf_vectorizer = comment_tf_idf_vectorizer
-        self.title_tf_idf_vectorizer = title_tf_idf_vectorizer
+        self.comment_tf_idf_vectorizer = get_text_encoder(comment_tf_idf_vectorizer)
+        self.title_tf_idf_vectorizer = get_text_encoder(title_tf_idf_vectorizer)
         self.frozen = frozen
 
         image_projector = torch.nn.Linear(

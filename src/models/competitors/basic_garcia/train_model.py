@@ -1,6 +1,6 @@
 import pandas as pd
 from src.models.competitors.basic_garcia.ranker import Ranker, TfidfEncoder
-from src.models.competitors.basic_garcia.basic_ranker_dataset import BasicRankerDataset
+from src.data.basic_ranker_dataset import BasicRankerDataset
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
