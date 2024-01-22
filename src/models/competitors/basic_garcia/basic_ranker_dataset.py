@@ -9,13 +9,13 @@ class BasicRankerDataset(Dataset):
     def __init__(
             self,
             image_dir: str,
-            dataset: pd.DataFrame,
+            dataset: Union[pd.DataFrame, str],
             names: Union[pd.DataFrame, str],
             preprocess: Compose = None,
     ):
         self.image_dir = image_dir
-        self.dataset = dataset
-        self.names = names if isinstance(names, pd.DataFrame) else pd.DataFrame(names)
+        self.dataset = dataset if isinstance(dataset, pd.DataFrame) else pd.read_csv(dataset)
+        self.names = names if isinstance(names, pd.DataFrame) else pd.read_csv(names)
         self.preprocess = preprocess
 
     def _get_image(self, image_id):

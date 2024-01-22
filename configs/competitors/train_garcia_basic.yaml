@@ -2,7 +2,7 @@ model:
   hidden_dim: 128
   frozen: True
   resnet:
-    pretrained: True
+    weights: v2
   comment_tf_idf_vectorizer:
     train_data: &train_corpus data/processed/garcia_basic/train.csv
     key: caption
@@ -13,6 +13,7 @@ model:
     train_data: *train_corpus
     key: title
     params:
+      max_features: 1096
       stop_words: english
 dataset:
   train:

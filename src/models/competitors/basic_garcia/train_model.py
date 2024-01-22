@@ -12,7 +12,8 @@ from src.models.utils import parse_args
 from torch.optim import Adam
 from src.models.EarlyStopping import EarlyStopping
 import os
-from torchvision.models import resnet152
+from torchvision.models import resnet152, ResNet152_Weights
+import joblib
 
 
 def train_model(
@@ -66,7 +67,10 @@ def get_encoder(vec_params: dict) -> TfidfEncoder:
 
 
 def init_model(model_params: dict) -> dict:
+    mapping_resnet = {'v1': ResNet152_Weights.IMAGENET1K_V1,
+                      'v2': ResNet152_Weights.IMAGENET1K_V2}
     resnet_params = model_params.get('resnet')
+    resnet_params['weights'] = mapping_resnet.get(resnet_params['weights'], ResNet152_Weights.IMAGENET1K_V2)
     resnet = resnet152(**resnet_params)
     comment_encoder = get_encoder(model_params['comment_tf_idf_vectorizer'])
     title_encoder = get_encoder(model_params['title_tf_idf_vectorizer'])
@@ -78,7 +82,7 @@ def init_model(model_params: dict) -> dict:
 
 def init_preprocess(preprocess_params: dict) -> dict:
     return Compose([
-        tr.__dict__[k](**v)
+        tr.__dict__[k](**v) if type(v) == dict else tr.__dict__[k]()
         for k, v in preprocess_params.items()
     ])
 
@@ -88,6 +92,7 @@ def main():
     parameters = load_ruamel(params_path)
     parameters['model'] = init_model(parameters['model'])
     model = Ranker(**parameters['model'])
+
     parameters['dataset']['train']['preprocess'] = init_preprocess(parameters['dataset']['train']['preprocess'])
     parameters['dataset']['val']['preprocess'] = init_preprocess(parameters['dataset']['val']['preprocess'])
 
@@ -103,7 +108,13 @@ def main():
 
     model_dir = parameters["out_dir"]
     os.makedirs(model_dir, exist_ok=True)
+
+    # saving tf-idf
+    joblib.dump(model.title_tf_idf_vectorizer, f'{model_dir}/title_vectorizer.pkl')
+    joblib.dump(model.comment_tf_idf_vectorizer, f'{model_dir}/comment_vectorizer.pkl')
+
     early_stop = EarlyStopping(path=f'{model_dir}/model_state_dict.pt', **parameters['early_stop'])
+
     train_model(
         model=model,
         train_loader=train_loader,
@@ -113,3 +124,7 @@ def main():
         early_stop=early_stop,
         **parameters['general']
     )
+
+
+if __name__ == '__main__':
+    main()
