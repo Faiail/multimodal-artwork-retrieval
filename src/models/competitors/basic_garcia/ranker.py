@@ -4,7 +4,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Union
 import joblib
 
-
 class TfidfEncoder(TfidfVectorizer):
     def __init__(
             self,
@@ -32,23 +31,27 @@ class Ranker(torch.nn.Module):
             comment_tf_idf_vectorizer: Union[TfidfEncoder, str],
             title_tf_idf_vectorizer: Union[TfidfEncoder, str],
             frozen: bool = True,
+            device: str = 'cuda'
     ):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.comment_tf_idf_vectorizer = get_text_encoder(comment_tf_idf_vectorizer)
         self.title_tf_idf_vectorizer = get_text_encoder(title_tf_idf_vectorizer)
         self.frozen = frozen
+        self.device = device
 
         image_projector = torch.nn.Linear(
             in_features=resnet.fc.in_features,
             out_features=self.hidden_dim
         )
+
         resnet = torch.nn.Sequential(*list(resnet.children())[:-1])
         if self.frozen:
             for p in resnet.parameters():
                 p.requires_grad = False
         self.image_encoder = torch.nn.Sequential(*[
             resnet,
+            torch.nn.Flatten(),
             image_projector,
             torch.nn.Tanh(),
             torch.nn.LayerNorm(hidden_dim),
@@ -66,9 +69,9 @@ class Ranker(torch.nn.Module):
         ])
 
     def encode_text(self, raw_comment: List[str], raw_title) -> torch.Tensor:
-        x_t = self.title_tf_idf_vectorizer.transform(raw_title)
+        x_t = self.title_tf_idf_vectorizer.transform(raw_title).toarray()
         x_t = torch.as_tensor(x_t, device=self.device, dtype=torch.float)
-        x_c = self.comment_tf_idf_vectorizer.transform(raw_comment)
+        x_c = self.comment_tf_idf_vectorizer.transform(raw_comment).toarray()
         x_c = torch.as_tensor(x_c, device=self.device, dtype=torch.float)
         x = torch.cat([x_c, x_t], dim=1)
         return self.text_encoder(x)

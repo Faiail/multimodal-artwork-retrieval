@@ -37,11 +37,11 @@ def train_model(
             cumulated_loss = 0.0
             with torch.set_grad_enabled(phase == 'train'):
                 for step, data_dict in enumerate(tqdm(loader)):
-                    label = data_dict.get('gt')
+                    label = data_dict.get('gt').to(device)
                     images = data_dict.get('images').to(device)
-                    comments = data_dict.get('comments').to(device)
-                    titles = data_dict.get('titles').to(device)
-                    image_embeddings, text_embeddings = model.forward(images, comments, titles)
+                    comments = data_dict.get('comments')
+                    titles = data_dict.get('titles')
+                    image_embeddings, text_embeddings = model(images, comments, titles)
 
                     loss = criterion(image_embeddings, text_embeddings, label)
                     cumulated_loss = cumulated_loss + loss.cpu().item()

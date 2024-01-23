@@ -27,8 +27,8 @@ dataset:
       CenterCrop:
         size: 224
       Normalize:
-        mean: &norm_mean (0.48145466, 0.4578275, 0.40821073)
-        std: &norm_std (0.26862954, 0.26130258, 0.27577711)
+        mean: &norm_mean [0.48145466, 0.4578275, 0.40821073]
+        std: &norm_std [0.26862954, 0.26130258, 0.27577711]
   val:
     image_dir: *img_dir
     dataset: data/processed/scores/val/data.csv
@@ -41,7 +41,7 @@ dataset:
         mean: *norm_mean
         std: *norm_std
 dataloader:
-  batch_size: 32
+  batch_size: 256
   num_workers: 16
   drop_last: False
   shuffle: True
