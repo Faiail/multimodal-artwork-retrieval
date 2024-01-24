@@ -88,8 +88,8 @@ class BasicGarciaPredictorDataset(PredictorTestDataset):
             data_keys,
             out_keys,
             names: Union[pd.DataFrame, str],
-            data_dir: str,
-            preprocess,
+            data_dir: str = None,
+            preprocess: Optional[Compose] = None,
     ):
         super().__init__()
         self.data_t = data_t

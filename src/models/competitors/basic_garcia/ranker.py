@@ -4,6 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Union
 import joblib
 
+
 class TfidfEncoder(TfidfVectorizer):
     def __init__(
             self,

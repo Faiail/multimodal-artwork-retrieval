@@ -56,7 +56,7 @@ def train_model(
                 if early_stop.early_stop:
                     print(f'early stopping at epoch {epoch:03d}')
                     return -early_stop.best_score
-            return -early_stop.best_score
+    return -early_stop.best_score
 
 
 def get_encoder(vec_params: dict) -> TfidfEncoder:
