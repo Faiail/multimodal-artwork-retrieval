@@ -26,7 +26,7 @@ model:
 def _init_model(model_params):
     model_cls = mod.__dict__[model_params.get('type')]
     model = model_cls(**model_params['params'])
-    state_dict = torch.load(model['state_dict'])
+    state_dict = torch.load(model_params['state_dict'])
     model.load_state_dict(state_dict)
     return model
 
@@ -47,8 +47,9 @@ def _init_preprocess(preprocess_params: dict) -> dict:
 
 
 def _init_test_set(dataset_params, dataloader_params):
-    dataset_params['params']['preprocess'] = _init_preprocess(dataset_params['params']['preprocess'])
-    dataset = src.data.__dict__[dataset_params['type']](dataset_params['params'])
+    if 'preprocess' in dataset_params.get('params').keys():
+        dataset_params['params']['preprocess'] = _init_preprocess(dataset_params['params']['preprocess'])
+    dataset = src.data.__dict__[dataset_params['type']](**dataset_params['params'])
     return DataLoader(dataset=dataset, **dataloader_params)
 
 
@@ -87,17 +88,31 @@ def _prepare_for_metrics(
     return flat_pred, flat_target, flat_indexes
 
 
+def prepare_batch(batch, device):
+    if isinstance(batch, list):
+        return batch
+    if isinstance(batch, dict):
+        return {
+            k: v.to(device) if isinstance(v, torch.Tensor) else v
+            for k, v in batch.items()
+        }
+    if isinstance(batch, torch.Tensor):
+        return batch.to(device)
+
+
+@torch.no_grad
 def test_loop(
         predictor: Predictor,
         test_loader: DataLoader,
         metrics: dict,
         pbar: bool,
         device: str = 'cuda',
+        **kwargs,
 ) -> dict[str, float]:
     iterator = tqdm(test_loader) if pbar else test_loader
     predictor.model = predictor.model.to(device)
     for batch, label in iterator:
-        batch = batch.to(device) if isinstance(batch, torch.Tensor) else {k: v.to(device) for k, v in batch.items()}
+        batch = prepare_batch(batch, device)
         label = label.to(device)
         predictions = predictor.predict(batch)
         # flatten predictions and labels for computing metrics
@@ -125,9 +140,9 @@ def main():
     metrics = _init_metrics(params['metrics'])
 
     predictor = Predictor(model=model,
-                          task=params['predictor'],
                           auxiliary_models_cat=aux_models_cat,
-                          auxiliary_models_query=aux_models_query)
+                          auxiliary_models_query=aux_models_query,
+                          **params['predictor'])
 
     predictor.encode_catalogue(catalogue=test_catalogue)
 
@@ -135,10 +150,15 @@ def main():
     metric_values = test_loop(predictor=predictor,
                               test_loader=test_loader,
                               metrics=metrics,
-                              **params['general'])
-    out_dir = params['out_dir']
+                              **params['test_loop'])
+    out_dir = params['general']['out_dir']
     os.makedirs(out_dir, exist_ok=True)
-    json.dump(metric_values, f'{out_dir}/test_metrics.json')
+    print(f'saving to {out_dir}/test_metrics.json')
+    with open(f'{out_dir}/test_metrics.json', 'w+') as f:
+        json.dump(metric_values, f)
 
+
+if __name__ == '__main__':
+    main()
 
 

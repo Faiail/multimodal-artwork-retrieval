@@ -3,6 +3,7 @@ from torchvision.models import ResNet
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Union
 import joblib
+from torchvision.models import ResNet152_Weights, resnet152
 
 
 class TfidfEncoder(TfidfVectorizer):
@@ -24,11 +25,20 @@ def get_text_encoder(instance):
     return joblib.load(instance)
 
 
+def _init_resnet(resnet):
+    mapping_resnet = {'v1': ResNet152_Weights.IMAGENET1K_V1,
+                      'v2': ResNet152_Weights.IMAGENET1K_V2}
+    if not isinstance(resnet, dict):
+        return resnet
+    resnet['weights'] = mapping_resnet.get(resnet['weights'], ResNet152_Weights.IMAGENET1K_V2)
+    return resnet152(**resnet)
+
+
 class Ranker(torch.nn.Module):
     def __init__(
             self,
             hidden_dim: int,
-            resnet: ResNet,
+            resnet: Union[ResNet, dict],
             comment_tf_idf_vectorizer: Union[TfidfEncoder, str],
             title_tf_idf_vectorizer: Union[TfidfEncoder, str],
             frozen: bool = True,
@@ -41,11 +51,11 @@ class Ranker(torch.nn.Module):
         self.frozen = frozen
         self.device = device
 
+        resnet = _init_resnet(resnet)
         image_projector = torch.nn.Linear(
             in_features=resnet.fc.in_features,
             out_features=self.hidden_dim
         )
-
         resnet = torch.nn.Sequential(*list(resnet.children())[:-1])
         if self.frozen:
             for p in resnet.parameters():
