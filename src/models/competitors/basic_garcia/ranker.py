@@ -1,22 +1,34 @@
 import torch
 from torchvision.models import ResNet
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import TruncatedSVD
 from typing import List, Union
 import joblib
 from torchvision.models import ResNet152_Weights, resnet152
 
 
-class TfidfEncoder(TfidfVectorizer):
+class TfidfEncoder:
     def __init__(
             self,
             max_features=None,
             stop_words=None,
     ):
-        super().__init__(max_features=max_features, stop_words=stop_words)
+        self._max_features = max_features
+        self.pipeline = Pipeline([
+            ('tfidf', TfidfVectorizer(stop_words=stop_words)),
+            ('pca', TruncatedSVD(n_components=max_features))
+        ])
+
+    def fit(self, corpus):
+        self.pipeline.fit(corpus)
+
+    def transform(self, corpus):
+        return self.pipeline.transform(corpus)
 
     @property
     def vector_size(self):
-        return len(self.get_feature_names_out())
+        return self._max_features
 
 
 def get_text_encoder(instance):
@@ -80,9 +92,9 @@ class Ranker(torch.nn.Module):
         ])
 
     def encode_text(self, raw_comment: List[str], raw_title) -> torch.Tensor:
-        x_t = self.title_tf_idf_vectorizer.transform(raw_title).toarray()
+        x_t = self.title_tf_idf_vectorizer.transform(raw_title)
         x_t = torch.as_tensor(x_t, device=self.device, dtype=torch.float)
-        x_c = self.comment_tf_idf_vectorizer.transform(raw_comment).toarray()
+        x_c = self.comment_tf_idf_vectorizer.transform(raw_comment)
         x_c = torch.as_tensor(x_c, device=self.device, dtype=torch.float)
         x = torch.cat([x_c, x_t], dim=1)
         return self.text_encoder(x)

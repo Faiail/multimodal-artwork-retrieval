@@ -70,10 +70,16 @@ def init_model(model_params: dict) -> dict:
     mapping_resnet = {'v1': ResNet152_Weights.IMAGENET1K_V1,
                       'v2': ResNet152_Weights.IMAGENET1K_V2}
     resnet_params = model_params.get('resnet')
+    print('constructing resnet152...')
     resnet_params['weights'] = mapping_resnet.get(resnet_params['weights'], ResNet152_Weights.IMAGENET1K_V2)
     resnet = resnet152(**resnet_params)
+    print('Done!')
+    print('Constructing comment encoder...')
     comment_encoder = get_encoder(model_params['comment_tf_idf_vectorizer'])
+    print('Done!')
+    print('Constructing title encoder...')
     title_encoder = get_encoder(model_params['title_tf_idf_vectorizer'])
+    print('Done!')
     model_params['resnet'] = resnet
     model_params['comment_tf_idf_vectorizer'] = comment_encoder
     model_params['title_tf_idf_vectorizer'] = title_encoder

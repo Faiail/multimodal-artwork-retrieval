@@ -38,7 +38,7 @@ class BasicRankerDataset(Dataset):
         data_dict['images'] = self._get_image(self.dataset.iloc[item, 0])
         # get the text from the second one
         data_dict.update(self._get_text(self.dataset.iloc[item, 1]))
-        data_dict['gt'] = 0 if self.dataset.iloc[item, 2] < .5 else 1
+        data_dict['gt'] = -1 if self.dataset.iloc[item, 2] < .5 else 1
         return data_dict
 
     def __len__(self):
