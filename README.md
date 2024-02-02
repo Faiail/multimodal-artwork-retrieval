@@ -102,5 +102,18 @@ python -m src.data.prepare_similarity_dataset --params_path configs/prepare_simi
 python -m src.models.train_siamese_network --params_path configs/train_siamese_network.yaml
 ```
 
+* PREPROCESS BASIC GARCIA
+```
+python -m src.models.competitors.basic_garcia.preprocess --params_path configs/competitors/preprocess_garcia_basic.yaml
+```
+* TRAIN BASIC GARCIA
+```
+python -m src.models.competitors.basic_garcia.train_model --params_path configs/competitors/train_garcia_basic.yaml
+```
+
+* PREPROCESS CONTEXTNET
+```
+python -m src.models.competitors.contextnet.preprocess --params_path configs/competitors/preprocess_contextnet.yaml
+```
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
