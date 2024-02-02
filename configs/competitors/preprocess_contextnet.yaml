@@ -1,0 +1,12 @@
+driver:
+  uri: bolt://localhost:7687
+  auth: ['neo4j','neo4j']
+db: ret
+name: myNode2vecGraph
+emb_out_dir: data/external/contextnet/embeddings
+data_class_out_dir: data/processed/contextnet/classification
+data_attr_out_dir: data/processed/contextnet/attribute
+split_dir: data/processed/proj
+local:
+  mapping_file: data/external/artgraph2bestemotions/mapping/artwork_entidx2name.csv
+  relation_file: data/external/artgraph2bestemotions/raw/relations/artwork___hasstyle___style/edge.csv
