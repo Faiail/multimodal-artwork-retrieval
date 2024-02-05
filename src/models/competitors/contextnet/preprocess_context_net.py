@@ -133,13 +133,13 @@ def main():
     local_data = get_local_artwork_style(**params['local'])
     local_data['name'] = local_data['name'].map(lambda x: x.replace('.jpg', '.safetensors'))
     attribute_data = get_attribute_data(driver, db)
+    attribute_data['artwork_name'] = attribute_data['artwork_name'].map(lambda x: x.replace('.jpg', '.safetensors'))
     splits = params['split_dir']
     for f in os.listdir(splits):
         data_class = get_classification_split(
             split_file=f'{splits}/{f}',
             local_data=local_data,
         )
-
         data_attr = get_attribute_split(
             split_file=f'{splits}/{f}',
             attribute_data=attribute_data,
