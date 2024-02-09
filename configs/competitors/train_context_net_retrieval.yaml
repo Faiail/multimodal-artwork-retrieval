@@ -1,0 +1,75 @@
+model:
+  hidden_dim: 128
+  frozen: True
+  device: cuda
+  resnet:
+    weights: v2
+  context_net:
+    params:
+      resnet:
+        weights: v2
+      out_dim: 32
+      hidden_dim: 128
+      frozen: True
+    state_dict: data/models/competitors/contextnet_classifier/model_state_dict.pt
+  context_net_out_dim: 32
+  comment_tf_idf_vectorizer:
+    train_data: &train_corpus data/processed/garcia_basic/train.csv
+    key: caption
+    params:
+      max_features: 9708
+      stop_words: english
+  title_tf_idf_vectorizer:
+    train_data: *train_corpus
+    key: title
+    params:
+      max_features: 9092
+      stop_words: english
+  attribute_one_hot_vectorizer:
+    train_data: &train_attribute data/processed/contextnet/attribute_train.csv
+    key: artwork_name
+    params:
+      sparse: False
+dataset:
+  train:
+    image_dir: &img_dir data/raw/images-resized
+    dataset: data/processed/scores/train/data.csv
+    names: *train_corpus
+    attribute_names: *train_attribute
+    preprocess:
+      ToTensor: None
+      RandomHorizontalFlip:
+        p: 0.5
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: &norm_mean [0.48145466, 0.4578275, 0.40821073]
+        std: &norm_std [0.26862954, 0.26130258, 0.27577711]
+  val:
+    image_dir: *img_dir
+    dataset: data/processed/scores/val/data.csv
+    names: data/processed/garcia_basic/val.csv
+    attribute_names: data/processed/contextnet/attribute/val.csv
+    preprocess:
+      ToTensor: None
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: *norm_mean
+        std: *norm_std
+dataloader:
+  batch_size: 256
+  num_workers: 16
+  drop_last: False
+  shuffle: True
+optimizer:
+  lr: 1e-4
+criterion:
+  margin: 0.1
+out_dir: data/models/competitors/contextnet_retrieval
+early_stop:
+  patience: 5
+  verbose: False
+general:
+  num_epochs: 30
+  device: cuda

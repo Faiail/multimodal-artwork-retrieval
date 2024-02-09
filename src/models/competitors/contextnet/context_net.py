@@ -25,9 +25,9 @@ class ContextNet(torch.nn.Module):
         resnet = _init_resnet(resnet)
         if frozen:
             for p in resnet.parameters():
-                p.requires_grad=False
+                p.requires_grad = False
             for p in resnet.layer4.parameters():
-                p.requires_grad=True
+                p.requires_grad = True
         resnet_dim = resnet.fc.in_features
         self.resnet = torch.nn.Sequential(*list(resnet.children())[:-1], torch.nn.Flatten())
         self.classifier = torch.nn.Linear(resnet_dim, out_dim)
