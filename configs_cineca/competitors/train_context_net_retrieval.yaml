@@ -72,4 +72,4 @@ early_stop:
   verbose: True
 general:
   num_epochs: 30
-  device: cuda
+  device: auto
