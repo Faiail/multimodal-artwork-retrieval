@@ -13,4 +13,4 @@
 #SBATCH --out=trainContextNet.out
 #SBATCH --err=trainContextNet.out
 
-srun ./train_contxtnet_exe
+srun ./train_contextnet_exe
