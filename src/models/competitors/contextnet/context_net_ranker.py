@@ -2,17 +2,38 @@ import torch
 from typing import Union, Optional
 from torchvision.models import ResNet
 from src.models.competitors.contextnet.context_net import ContextNet, _init_resnet
-from src.models.competitors.basic_garcia.ranker import TfidfEncoder
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+
+
+class TfIdfEncoder:
+    def __init__(self, max_features=None, stop_words=None):
+        self.vectorizer = TfidfVectorizer(max_features=max_features, stop_words=stop_words)
+        self._max_features = max_features
+
+    def fit(self, corpus):
+        self.vectorizer.fit(corpus)
+
+    def transform(self, corpus):
+        return self.vectorizer.transform(corpus)
+
+    def fit_transform(self, corpus):
+        return self.vectorizer.fit_transform(corpus)
+
+    @property
+    def vector_size(self):
+        return self._max_features
 
 
 class OneHotAttributeEncoder:
     def __init__(self, sparse=False):
         self.sparse = sparse
         self.encoder = OneHotEncoder(sparse=sparse)
+        self.ex = None
 
     def fit(self, vocabulary):
+        self.ex = vocabulary.iloc[0].values.reshape((1, -1))
         self.encoder.fit(vocabulary)
 
     def transform(self, x):
@@ -23,8 +44,7 @@ class OneHotAttributeEncoder:
 
     @property
     def vector_size(self):
-        dummy_input = np.array(['hello']).reshape(1, -1)
-        return self.encoder.transform(dummy_input).shape[1]
+        return self.encoder.transform(self.ex).shape[1]
 
 
 class ContextNetRanker(torch.nn.Module):
@@ -33,8 +53,8 @@ class ContextNetRanker(torch.nn.Module):
             resnet: Union[dict, ResNet],
             context_net: ContextNet,
             context_net_out_dim: int,
-            title_vectorizer: TfidfEncoder,
-            comment_vectorizer: TfidfEncoder,
+            title_vectorizer: TfIdfEncoder,
+            comment_vectorizer: TfIdfEncoder,
             attribute_vectorizer: OneHotAttributeEncoder,
             hidden_dim: Optional[int] = 128,
             frozen: Optional[bool] = True,
@@ -43,7 +63,7 @@ class ContextNetRanker(torch.nn.Module):
         super().__init__()
         resnet = _init_resnet(resnet)
         resnet_features = resnet.fc.in_features
-        resnet = torch.nn.Sequential(*list(resnet.children())[:-1])
+        resnet = torch.nn.Sequential(*list(resnet.children())[:-1], torch.nn.Flatten())
         if frozen:
             for p in resnet.parameters():
                 p.requires_grad = False
@@ -82,9 +102,9 @@ class ContextNetRanker(torch.nn.Module):
         return self.img_proj(shared)
 
     def encode_text(self, com, tit, att):
-        comments = torch.from_numpy(self.comment_vectorizer.transform(com)).to(self.device)
-        titles = torch.from_numpy(self.title_vectorizer.transform(tit)).to(self.device)
-        attributes = torch.from_numpy(self.attribute_vectorizer.transform(att)).to(self.device)
+        comments = torch.from_numpy(self.comment_vectorizer.transform(com).toarray()).to(self.device).float()
+        titles = torch.from_numpy(self.title_vectorizer.transform(tit).toarray()).to(self.device).float()
+        attributes = torch.from_numpy(self.attribute_vectorizer.transform(att)).to(self.device).float()
         shared = torch.cat([comments, titles, attributes], dim=-1).to(self.device)
         return self.text_proj(shared)
 

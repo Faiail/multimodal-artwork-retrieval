@@ -1,7 +1,6 @@
 import pandas as pd
-from src.models.competitors.basic_garcia.ranker import TfidfEncoder
-from src.models.competitors.contextnet.context_net_ranker import ContextNetRanker, ContextNet, OneHotAttributeEncoder
-from src.data.context_net_dataset import ContextNetRankerDataset
+from src.models.competitors.contextnet.context_net_ranker import ContextNetRanker, ContextNet, OneHotAttributeEncoder, TfIdfEncoder
+from src.data.context_net_dataset import ContextNetRankerDataset, collate_fn
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
@@ -16,7 +15,9 @@ import os
 from torchvision.models import resnet50, ResNet50_Weights
 import joblib
 from typing import Optional
+import warnings
 
+warnings.filterwarnings('ignore')
 
 def train_model(
         model: ContextNetRanker,
@@ -62,8 +63,8 @@ def train_model(
     return -early_stop.best_score
 
 
-def get_tfidf_encoder(vec_params: dict) -> TfidfEncoder:
-    vectorizer = TfidfEncoder(**vec_params['params'])
+def get_tfidf_encoder(vec_params: dict) -> TfIdfEncoder:
+    vectorizer = TfIdfEncoder(**vec_params['params'])
     data = pd.read_csv(vec_params['train_data'])[vec_params['key']].tolist()
     vectorizer.fit(data)
     return vectorizer
@@ -86,19 +87,19 @@ def init_model(model_params: dict) -> dict:
     resnet = resnet50(**resnet_params)
     print('Done!')
     print('Constructing comment encoder...')
-    comment_encoder = get_tfidf_encoder(model_params['comment_tf_idf_vectorizer'])
+    comment_encoder = get_tfidf_encoder(model_params['comment_vectorizer'])
     print('Done!')
     print('Constructing title encoder...')
-    title_encoder = get_tfidf_encoder(model_params['title_tf_idf_vectorizer'])
+    title_encoder = get_tfidf_encoder(model_params['title_vectorizer'])
     print('Done!')
     print('Constructing attribute encoder...')
-    attribute_encoder = get_onehot_encoder(model_params['attribute_one_hot_vectorizer'])
+    attribute_encoder = get_onehot_encoder(model_params['attribute_vectorizer'])
     print('Done!')
     model_params['resnet'] = resnet
-    model_params['comment_tf_idf_vectorizer'] = comment_encoder
-    model_params['title_tf_idf_vectorizer'] = title_encoder
-    model_params['attribute_one_hot_encoder'] = attribute_encoder
-    model_params['contextnet'] = init_contextnet(model_params['contextnet'])
+    model_params['comment_vectorizer'] = comment_encoder
+    model_params['title_vectorizer'] = title_encoder
+    model_params['attribute_vectorizer'] = attribute_encoder
+    model_params['context_net'] = init_contextnet(model_params['context_net'])
     return model_params
 
 
@@ -133,18 +134,18 @@ def main():
     parameters['dataset']['val']['preprocess'] = init_preprocess(parameters['dataset']['val']['preprocess'])
 
     train_data = ContextNetRankerDataset(**parameters['dataset']['train'])
-    train_loader = DataLoader(dataset=train_data, **parameters['dataloader'])
+    train_loader = DataLoader(dataset=train_data, collate_fn=collate_fn, **parameters['dataloader'])
 
     val_data = ContextNetRankerDataset(**parameters['dataset']['val'])
-    val_loader = DataLoader(dataset=val_data, **parameters['dataloader'])
+    val_loader = DataLoader(dataset=val_data, collate_fn=collate_fn, **parameters['dataloader'])
 
     optimizer = Adam(params=model.parameters(), **parameters['optimizer'])
 
     criterion = CosineEmbeddingLoss(**parameters['criterion'])
 
     # saving tf-idf and one-hot-encoder
-    joblib.dump(model.title_tf_idf_vectorizer, f'{model_dir}/title_vectorizer.pkl')
-    joblib.dump(model.comment_tf_idf_vectorizer, f'{model_dir}/comment_vectorizer.pkl')
+    joblib.dump(model.title_vectorizer, f'{model_dir}/title_vectorizer.pkl')
+    joblib.dump(model.comment_vectorizer, f'{model_dir}/comment_vectorizer.pkl')
     joblib.dump(model.attribute_vectorizer, f"{model_dir}/attribute_vectorizer.pkl")
 
     early_stop = EarlyStopping(path=f'{model_dir}/model_state_dict.pt', **parameters['early_stop'])
