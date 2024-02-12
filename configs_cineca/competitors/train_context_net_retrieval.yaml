@@ -13,19 +13,19 @@ model:
       frozen: True
     state_dict: data/models/competitors/contextnet_classifier/model_state_dict.pt
   context_net_out_dim: 32
-  comment_tf_idf_vectorizer:
+  comment_vectorizer:
     train_data: &train_corpus data/processed/garcia_basic/train.csv
     key: caption
     params:
       max_features: 9708
       stop_words: english
-  title_tf_idf_vectorizer:
+  title_vectorizer:
     train_data: *train_corpus
     key: title
     params:
       max_features: 9092
       stop_words: english
-  attribute_one_hot_vectorizer:
+  attribute_vectorizer:
     train_data: &train_attribute data/processed/contextnet/attribute/train.csv
     key: artwork_name
     params:
@@ -59,7 +59,7 @@ dataset:
         std: *norm_std
 dataloader:
   batch_size: 256
-  num_workers: 16
+  num_workers: 32
   drop_last: False
   shuffle: True
 optimizer:
