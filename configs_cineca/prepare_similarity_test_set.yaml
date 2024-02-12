@@ -1,0 +1,15 @@
+scorer:
+  uri: bolt://localhost:7687
+  user: neo4j
+  pwd: admin
+  db: ret
+  node_t: Artwork
+  save: True
+  out_dir: data/interim/scorer/test
+mapping_file: data/processed/proj/test.csv
+general:
+  mode: random
+  split: test
+  max_entries_per_category: 3
+  out_dir: data/processed/scores/
+  seed: 1

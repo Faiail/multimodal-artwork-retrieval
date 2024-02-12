@@ -1,0 +1,12 @@
+dataset:
+  root: ../../data/external/artgraph2bestemotions
+  vis_feats_root: ../../data/processed/embeddings
+  label_feats_root: ../../data/processed/label_embeddings
+  labels: 2
+splitter:
+  node_split_center: artwork
+  seed: 1
+  stratify: style
+  val_ratio: 0.1
+  test_ratio: 0.1
+out_dir: ../../data/processed/artgraph_split_open_clip

@@ -1,0 +1,31 @@
+data:
+  train: ../../data/processed/artgraph_split_open_clip/train/train_data.pt
+  val: ../../data/processed/artgraph_split_open_clip/val/val_data.pt
+  test: ../../data/processed/artgraph_split_open_clip/test/test_data.pt
+model:
+  source_node: artwork
+  dest_node: style
+  rel: hasstyle
+  encoder_num_layers: [1, 2]
+  encoder_hidden_channels: [32, 64, 128]
+  encoder_num_heads: [1, 2, 4]
+  encoder_dropouts: [0.0, 0.2, 0.3]
+  encoder_add_self_loops: False
+  encoder_shared_weights: True
+  final_dimension: 512
+num_epochs: 300
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0001
+scheduler:
+  factor: 0.1
+  patience: 2
+early_stop:
+  patience: 10
+  verbose: False
+out: ../../data/models/hgae
+device: cuda
+verbose: False
+pbar: False
+n_trials: 20
+

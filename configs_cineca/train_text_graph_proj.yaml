@@ -1,0 +1,73 @@
+model:
+  in_channels: 512
+  out_channels: 512
+  act: relu
+dataset:
+  train:
+    source_modality: text
+    dest_modality: graph
+    data_source_dir: None
+    data_dest_dir: data/processed/complete_embeddings
+    mode: raw
+    preprocess_source:
+      RandomWordAug:
+        action: delete
+        aug_p: 0.4
+      SynonymAug:
+        aug_src: wordnet
+        aug_p: 0.4
+    data: data/processed/proj/train.csv
+  val:
+    source_modality: text
+    dest_modality: graph
+    mode: embedding
+    data_source_dir: data/processed/complete_embeddings
+    data_dest_dir: data/processed/complete_embeddings
+    data: data/processed/proj/val.csv
+  test:
+    mode: embedding
+    source_modality: text
+    dest_modality: graph
+    data_source_dir: data/processed/complete_embeddings
+    data_dest_dir: data/processed/complete_embeddings
+    data: data/processed/proj/test.csv
+dataloader:
+  shuffle: True
+  drop_last: False
+optimizer:
+  weight_decay: 0.0001
+scheduler:
+  factor: 0.1
+  patience: 2
+  verbose: False
+early_stop:
+  patience: 10
+  verbose: False
+general:
+  device: cuda
+  num_epochs: 100
+  verbose: True
+  pbar: False
+hyperopt:
+  model__strategy:
+    type: choice
+    range: [0, 1, 2]
+  model__n_layers:
+    type: choice
+    range: [1, 2, 3]
+  model__dropout:
+    type: uniform
+    range: [0.0, 0.5]
+  dataloader__batch_size:
+    type: choice
+    range: [32, 64, 128]
+  optimizer__lr:
+    type: uniform
+    range: [0.0001, 0.001]
+  general__accum_iter:
+    type: choice
+    range: [5, 10, 15]
+n_trials: 20
+out_dir: data/models/feat_proj_text_graph
+progress_bar: True
+

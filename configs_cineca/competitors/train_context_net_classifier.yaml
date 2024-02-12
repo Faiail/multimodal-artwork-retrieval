@@ -1,0 +1,49 @@
+model:
+  resnet:
+    weights: v2
+  out_dim: 32
+  hidden_dim: 128
+  frozen: True
+dataset:
+  train:
+    image_dir: &img_dir data/raw/images-resized
+    data: data/processed/contextnet/classification/train.csv
+    emb_dir: data/external/contextnet/embeddings
+    emb_key: node2vec
+    preprocess:
+      ToTensor: None
+      RandomHorizontalFlip:
+        p: 0.5
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: &norm_mean [0.48145466, 0.4578275, 0.40821073]
+        std: &norm_std [0.26862954, 0.26130258, 0.27577711]
+  val:
+    image_dir: *img_dir
+    data: data/processed/contextnet/classification/val.csv
+    emb_dir: data/external/contextnet/embeddings
+    emb_key: node2vec
+    preprocess:
+      ToTensor: None
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: *norm_mean
+        std: *norm_std
+dataloader:
+  batch_size: 256
+  num_workers: 16
+  drop_last: False
+  shuffle: True
+optimizer:
+  lr: 0.001
+  momentum: 0.9
+out_dir: data/models/competitors/contextnet_classifier
+early_stop:
+  patience: 5
+  verbose: False
+general:
+  num_epochs: 30
+  device: cuda
+  l: 0.9

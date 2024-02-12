@@ -1,0 +1,62 @@
+general:
+  out_dir: data/models/competitors/basic_garcia
+  device: cuda
+model:
+  type: Ranker
+  params:
+    hidden_dim: &h_dim 128
+    resnet:
+      weights: v2
+    comment_tf_idf_vectorizer: data/models/competitors/basic_garcia/comment_vectorizer.pkl
+    title_tf_idf_vectorizer: data/models/competitors/basic_garcia/title_vectorizer.pkl
+    frozen: True
+    device: cuda
+  state_dict: data/models/competitors/basic_garcia/model_state_dict.pt
+dataset:
+  type: BasicGarciaPredictorDataset
+  params:
+    data_t: text
+    data_keys: [title, caption]
+    out_keys: [raw_title, raw_comment]
+    names: &csv_file data/processed/garcia_basic/test.csv
+catalogue:
+  type: BasicGarciaCatalogueDataset
+  params:
+    data_t: image
+    data_keys: [name]
+    out_keys: [images]
+    names: *csv_file
+    data_dir: data/raw/images-resized
+    preprocess:
+      ToTensor: None
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: [ 0.48145466, 0.4578275, 0.40821073 ]
+        std: [ 0.26862954, 0.26130258, 0.27577711 ]
+dataloader:
+  batch_size: 128
+  num_workers: 16
+  shuffle: False
+  drop_last: False
+metrics:
+  recall_at_1:
+    type: RetrievalRecall
+    params:
+      top_k: 1
+  recall_at_5:
+    type: RetrievalRecall
+    params:
+      top_k: 5
+  recall_at_10:
+    type: RetrievalRecall
+    params:
+      top_k: 10
+predictor:
+  pbar: True
+  norm: True
+  hidden_size: *h_dim
+  task: txt2img
+test_loop:
+  pbar: True
+  device: cuda

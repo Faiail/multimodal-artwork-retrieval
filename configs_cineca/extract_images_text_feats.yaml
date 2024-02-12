@@ -1,0 +1,9 @@
+model:
+  name: ViT-B-32
+  pretrained: laion2b_s34b_b79k
+  tokenizer: ViT-B-32
+  batch_size: 128
+data:
+  path: ../../data/raw/data_captions.csv
+  image_dir: ../../data/raw/images-resized
+  out_dir: ../../data/processed/embeddings

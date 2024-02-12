@@ -1,0 +1,109 @@
+general:
+  out_dir: data/models/competitors/basic_garcia
+  device: cuda
+model:
+  type: FusionModule
+  params:
+    in_channels: &h_dim 512
+    hidden_channels: *h_dim
+    ff_channels: *h_dim
+    out_channels: *h_dim
+    num_heads: 8
+    dropout: 0.48
+  state_dict: data/models/artwork_siamese_network_complete/fusion_module.pt
+auxiliary_model_cat:
+  text: #image 2 text model
+    type: FeatureProjector
+    params:
+      in_channels: *h_dim
+      out_channels: *h_dim
+      act: relu
+      dropout: 0.06
+      n_layers: 2
+      strategy: 1
+    state_dict: data/models/feat_proj_image_text/model_6.pt
+  graph: #image 2 graph model
+    type: FeatureProjector
+    params:
+      in_channels: *h_dim
+      out_channels: *h_dim
+      act: relu
+      dropout: 0.26
+      n_layers: 1
+      strategy: 1
+    state_dict: data/models/feat_proj_image_text/model_6.pt
+
+auxiliary_models_query:
+  image: # text 2 image
+    type: FeatureProjector
+    params:
+      in_channels: *h_dim
+      out_channels: *h_dim
+      act: relu
+      dropout: 0.01
+      n_layers: 2
+      strategy: 2
+    state_dict: data/models/feat_proj_image_text/model_6.pt
+  graph: # text 2 graph
+    type: FeatureProjector
+    params:
+      in_channels: *h_dim
+      out_channels: *h_dim
+      act: relu
+      dropout: 0.43
+      n_layers: 2
+      strategy: 0
+    state_dict: data/models/feat_proj_image_text/model_3.pt
+
+dataset:
+  type: BasicGarciaPredictorDataset
+  params:
+    data_t: text
+    data_keys: [title, caption]
+    out_keys: [raw_title, raw_comment]
+    names: &csv_file data/processed/garcia_basic/test.csv
+catalogue:
+  type: BasicGarciaCatalogueDataset
+  params:
+    data_t: image
+    data_keys: [name]
+    out_keys: [images]
+    names: *csv_file
+    data_dir: data/raw/images-resized
+    preprocess:
+      ToTensor: None
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: [ 0.48145466, 0.4578275, 0.40821073 ]
+        std: [ 0.26862954, 0.26130258, 0.27577711 ]
+dataloader:
+  batch_size: 128
+  num_workers: 16
+  shuffle: True
+  drop_last: False
+metrics:
+  recall_at_1:
+    type: RetrievalRecall
+    params:
+      top_k: 1
+  recall_at_5:
+    type: RetrievalRecall
+    params:
+      top_k: 5
+  recall_at_10:
+    type: RetrievalRecall
+    params:
+      top_k: 10
+  recall_at_10K:
+    type: RetrievalRecall
+    params:
+      top_k: 1000
+predictor:
+  pbar: True
+  norm: True
+  hidden_size: *h_dim
+  task: txt2img
+test_loop:
+  pbar: True
+  device: cuda

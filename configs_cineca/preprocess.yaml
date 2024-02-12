@@ -1,0 +1,3 @@
+data_captions:
+  in_path: data/raw/data_captions.csv
+  out_path: data/preprocessed/data_captions.csv
