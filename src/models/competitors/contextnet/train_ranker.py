@@ -29,6 +29,8 @@ def train_model(
         num_epochs: int,
         device,
 ):
+    if device == 'auto':
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
     loaders = {
         'train': train_loader,
         'val': val_loader
