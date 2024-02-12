@@ -72,7 +72,7 @@ def get_tfidf_encoder(vec_params: dict) -> TfidfEncoder:
 def get_onehot_encoder(enc_params: dict) -> OneHotAttributeEncoder:
     vectorizer = OneHotAttributeEncoder(**enc_params['params'])
     # get unique values
-    data = pd.read_csv(enc_params['train_data']).drop('key', axis=1)
+    data = pd.read_csv(enc_params['train_data']).drop(enc_params['key'], axis=1)
     vectorizer.fit(data)
     return vectorizer
 
@@ -141,7 +141,6 @@ def main():
     optimizer = Adam(params=model.parameters(), **parameters['optimizer'])
 
     criterion = CosineEmbeddingLoss(**parameters['criterion'])
-
 
     # saving tf-idf and one-hot-encoder
     joblib.dump(model.title_tf_idf_vectorizer, f'{model_dir}/title_vectorizer.pkl')

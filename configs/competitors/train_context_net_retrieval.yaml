@@ -26,7 +26,7 @@ model:
       max_features: 9092
       stop_words: english
   attribute_one_hot_vectorizer:
-    train_data: &train_attribute data/processed/contextnet/attribute_train.csv
+    train_data: &train_attribute data/processed/contextnet/attribute/train.csv
     key: artwork_name
     params:
       sparse: False
@@ -69,7 +69,7 @@ criterion:
 out_dir: data/models/competitors/contextnet_retrieval
 early_stop:
   patience: 5
-  verbose: False
+  verbose: True
 general:
   num_epochs: 30
   device: cuda
