@@ -1,4 +1,4 @@
 #!/bin/bash
 source ../.venv/bin/activate
 export TMPDIR=/leonardo_work/IscrC_DIANA/tmp/
-python -m src.models.competitors.contextnet.train_ranker --params_path configs/competitors/train_context_net_retrieval.yaml
+python -m src.models.competitors.contextnet.train_ranker --params_path configs_cineca/competitors/train_context_net_retrieval.yaml
