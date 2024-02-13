@@ -30,6 +30,7 @@ model:
     key: artwork_name
     params:
       sparse: False
+      handle_unknown: ignore
 dataset:
   train:
     image_dir: &img_dir data/raw/images-resized
@@ -58,8 +59,8 @@ dataset:
         mean: *norm_mean
         std: *norm_std
 dataloader:
-  batch_size: 256
-  num_workers: 32
+  batch_size: 512
+  num_workers: 8
   drop_last: False
   shuffle: True
 optimizer:

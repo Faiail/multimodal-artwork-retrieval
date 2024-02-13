@@ -27,9 +27,9 @@ class TfIdfEncoder:
 
 
 class OneHotAttributeEncoder:
-    def __init__(self, sparse=False):
+    def __init__(self, sparse=False, handle_unknown='ignore'):
         self.sparse = sparse
-        self.encoder = OneHotEncoder(sparse=sparse)
+        self.encoder = OneHotEncoder(sparse=sparse, handle_unknown=handle_unknown)
         self.ex = None
 
     def fit(self, vocabulary):
