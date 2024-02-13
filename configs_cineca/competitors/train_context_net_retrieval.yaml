@@ -29,7 +29,7 @@ model:
     train_data: &train_attribute data/processed/contextnet/attribute/train.csv
     key: artwork_name
     params:
-      sparse: False
+      sparse_output: False
       handle_unknown: ignore
 dataset:
   train:
