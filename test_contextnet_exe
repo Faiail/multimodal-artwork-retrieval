@@ -1,4 +1,4 @@
 #!/bin/bash
 source ../.venv/bin/activate
 export TMPDIR=/leonardo_work/IscrC_DIANA/tmp/
-python -m src.models.competitors.contextnet.train_ranker --params_path $1
+python -m src.models.competitors.contextnet.test_contextnet --params_path $1
