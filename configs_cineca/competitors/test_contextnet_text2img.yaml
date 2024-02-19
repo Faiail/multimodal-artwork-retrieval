@@ -1,0 +1,66 @@
+model:
+  params:
+    hidden_dim: 128
+    frozen: True
+    device: cuda
+    resnet:
+      weights: v2
+    context_net:
+      params:
+        resnet:
+          weights: v2
+        out_dim: 32
+        hidden_dim: 128
+        frozen: True
+      checkpoint: data/models/competitors/contextnet_classifier/model_state_dict.pt
+    context_net_out_dim: 32
+    comment_vectorizer: data/models/competitors/contextnet_retrieval/comment_vectorizer.pkl
+    title_vectorizer: data/models/competitors/contextnet_retrieval/title_vectorizer.pkl
+    attribute_vectorizer: data/models/competitors/contextnet_retrieval/attribute_vectorizer.pkl
+  checkpoint: data/models/competitors/contextnet_retrieval/model_state_dict.pt
+dataset:
+  catalogue:
+    task_type: catalogue
+    modality: text
+    data_keys: [caption, title, artist, style, genre]
+    dataset: &dataset data/processed/contextnet/test/data.csv
+  test:
+    task_type: test
+    modality: image
+    data_keys: name
+    dataset: *dataset
+    preprocess:
+      ToTensor: None
+      CenterCrop:
+        size: 224
+      Normalize:
+        mean: [ 0.48145466, 0.4578275, 0.40821073 ]
+        std: [ 0.26862954, 0.26130258, 0.27577711 ]
+    data_dir: data/raw/images-resized
+dataloader:
+  batch_size: 2
+  shuffle: False
+  drop_last: False
+  num_workers: 0
+metrics:
+  recall_at_1:
+    type: RetrievalRecall
+    params:
+      top_k: 1
+  recall_at_5:
+    type: RetrievalRecall
+    params:
+      top_k: 5
+  recall_at_10:
+    type: RetrievalRecall
+    params:
+      top_k: 10
+encoding:
+  task: &task text2img
+  pbar: &pbar True
+  device: &device cuda
+test_loop:
+  pbar: *pbar
+  task: *task
+  device: *device
+out_dir: data/models/competitors/contextnet_retrieval

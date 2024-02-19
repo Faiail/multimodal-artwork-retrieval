@@ -101,3 +101,70 @@ def collate_fn(batched_input):
         "attributes": attributes,
         "score": score,
     }
+
+
+class ContextNetRankerTestDataset(Dataset):
+    def __init__(
+            self,
+            task_type: str,  # catalogue, test
+            modality: str,  # e.g. image, text
+            data_keys: Union[str, list[str]],
+            dataset: Union[str, pd.DataFrame],
+            preprocess: Optional[Compose] = None,
+            data_dir: Optional[str] = None,
+    ):
+        super().__init__()
+        self.task_type = task_type
+        self.modality = modality
+        self.data_keys = data_keys
+        self.dataset = dataset if dataset is None or isinstance(dataset, pd.DataFrame) else pd.read_csv(dataset)
+        self.preprocess = preprocess
+        self.data_dir = data_dir
+
+    def _get_image(self, image_fname):
+        image = Image.open(f'{self.data_dir}/{image_fname}').convert('RGB')
+        return image if not self.preprocess else self.preprocess(image)
+
+    def _get_data(self, item):
+        raw = self.dataset.iloc[item]
+        if self.modality == 'image':
+            return {"image": self._get_image(raw[self.data_keys])}
+        else:
+            return {k: raw[k] for k in self.data_keys}
+
+    def _get_for_test(self, item):
+        data = self._get_data(item)
+        score = torch.zeros(size=(len(self.dataset), ))
+        score[item] = 1
+        data.update({'score': score})
+        return data
+
+    def __getitem__(self, item):
+        if self.task_type == 'catalogue':
+            return self._get_data(item)
+        return self._get_for_test(item)
+
+    def __len__(self):
+        return len(self.dataset)
+
+
+def collate_fn(batched_input):
+    out = {}
+    if 'image' in list(batched_input[0].keys()):
+        images = torch.stack([x['image'] for x in batched_input])
+        out.update({'image': images})
+    if 'caption' in list(batched_input[0].keys()):
+        captions = [x['caption'] for x in batched_input]
+        titles = [x['title'] for x in batched_input]
+
+        # doing attributes
+        artists = [x['artist'] for x in batched_input]
+        styles = [x['style'] for x in batched_input]
+        genres = [x['genre'] for x in batched_input]
+
+        attributes = list(zip(artists, styles, genres))
+        out.update({'caption': captions, 'title': captions, 'attributes': attributes})
+    if 'score' in list(batched_input[0].keys()):
+        scores = torch.stack([x['score'] for x in batched_input])
+        out.update({'score': scores})
+    return out
