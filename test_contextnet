@@ -10,7 +10,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=123000
 #SBATCH --job-name=train_contextnet
-#SBATCH --out=trainContextNet.out
-#SBATCH --err=trainContextNet.out
+#SBATCH --out=testContextNet.out
+#SBATCH --err=testContextNet.out
 
 srun ./test_contextnet_exe $1
