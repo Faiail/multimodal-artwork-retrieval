@@ -1,7 +1,7 @@
 model:
   in_channels: 512
   out_channels: 512
-  act: relu
+  act: tanh
 dataset:
   train:
     source_modality: image
