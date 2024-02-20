@@ -1,36 +1,14 @@
 model:
   params:
-    fusion_in_channels: &h_dim 512
-    fusion_hidden_channels: *h_dim
-    fusion_ff_channels: *h_dim
-    fusion_out_channels: *h_dim
-    fusion_num_heads: 8
+    in_channels: &h_dim 512
+    hidden_channels: *h_dim
+    ff_channels: *h_dim
+    out_channels: *h_dim
+    num_heads: 8
     dropout: 0.48
-    strategy: 2
-    num_layers: 2
-  state_dict: data/models/artwork_siamese_network_complete/model_0.pt
+  state_dict: data/models/artwork_siamese_network_complete/fusion_module.pt
 auxiliary_models_cat:
-  image: # text2img
-    params:
-      in_channels: *h_dim
-      out_channels: *h_dim
-      act: relu
-      dropout: 0.01
-      n_layers: 2
-      strategy: 2
-    state_dict: data/models/feat_proj_text_image/model_6.pt
-  graph: # text2graph
-    params:
-      in_channels: *h_dim
-      out_channels: *h_dim
-      act: relu
-      dropout: 0.43
-      n_layers: 2
-      strategy: 0
-    state_dict: data/models/feat_proj_text_graph/model_3.pt
-
-auxiliary_models_query:
-  image: # image2txt
+  text: #image 2 text model
     params:
       in_channels: *h_dim
       out_channels: *h_dim
@@ -39,7 +17,7 @@ auxiliary_models_query:
       n_layers: 2
       strategy: 1
     state_dict: data/models/feat_proj_image_text/model_6.pt
-  graph: # text 2 graph
+  graph: #image 2 graph model
     params:
       in_channels: *h_dim
       out_channels: *h_dim
@@ -47,17 +25,39 @@ auxiliary_models_query:
       dropout: 0.26
       n_layers: 1
       strategy: 1
-    state_dict: data/models/feat_proj_image_graph/model_4.pt
+    state_dict: data/models/feat_proj_image_text/model_6.pt
+
+auxiliary_models_query:
+  image: # text 2 image
+    params:
+      in_channels: *h_dim
+      out_channels: *h_dim
+      act: relu
+      dropout: 0.01
+      n_layers: 2
+      strategy: 2
+    state_dict: data/models/feat_proj_image_text/model_6.pt
+  graph: # text 2 graph
+    params:
+      in_channels: *h_dim
+      out_channels: *h_dim
+      act: relu
+      dropout: 0.43
+      n_layers: 2
+      strategy: 0
+    state_dict: data/models/feat_proj_image_text/model_3.pt
 
 dataset:
   catalogue:
-    names: &csv_file data/processed/proj/test.csv
-    modalities: [text]
-    data_dir: &data_dir data/processed/complete_embeddings
+    params:
+      names: &csv_file data/processed/proj/test.csv
+      modalities: [text]
+      data_dir: &data_dir data/processed/complete_embeddings
   test:
-    names: *csv_file
-    modalities: [image]
-    data_dir: *data_dir
+    params:
+      names: *csv_file
+      modalities: [image]
+      data_dir: *data_dir
 dataloader:
   batch_size: 128
   num_workers: 16
@@ -84,4 +84,3 @@ encoding:
 test_loop:
   pbar: *pbar
   device: *device
-out_dir: data_tmp/models/artwork_siamese_network_complete

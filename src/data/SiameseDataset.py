@@ -1,10 +1,11 @@
 from torch.utils.data import Dataset
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Union
 from PIL import Image
 import pandas as pd
 import torch
 from src.utils import load_tensor
 from src.data.utils import DataModality, Mode, Score
+from src.data.predictor_datasets import PredictorTestDataset, CatalogDataset
 
 
 class SiameseDataset(Dataset):
@@ -26,7 +27,7 @@ class SiameseDataset(Dataset):
         self.mode = mode
         self.data_dirs = data_dirs
         self.dataset = dataset if isinstance(dataset, pd.DataFrame) else pd.read_csv(dataset, index_col=0)
-        self.names = names if isinstance(dataset, pd.DataFrame) else pd.read_csv(names)
+        self.names = names if isinstance(names, pd.DataFrame) else pd.read_csv(names)
         self.preprocess = preprocess if preprocess else {}
         self.score_strategy = score_strategy
         self.max_retry = max_retry
@@ -105,3 +106,44 @@ class SiameseDataset(Dataset):
 
     def __len__(self):
         return len(self.dataset)
+
+
+class SiameseCatalogueDataset(Dataset):
+    def __init__(
+            self,
+            names: Union[pd.DataFrame, str],
+            modalities: List[str],
+            data_dir: str,
+    ):
+        super().__init__()
+        self.modalities = modalities
+        self.data_dir = data_dir
+        self.names = names if isinstance(names, pd.DataFrame) else pd.read_csv(names)
+        self.names = self.names[self.names.columns[0]].tolist()
+
+    def _get_modality(self, fname, modality):
+        return load_tensor(f'{self.data_dir}/{fname}', key=modality)
+
+    def __getitem__(self, item):
+        raw_item = self.names[item]
+        return {mod: self._get_modality(raw_item, mod) for mod in self.modalities}
+
+    def __len__(self):
+        return len(self.names)
+
+
+class SiameseTestDataset(SiameseCatalogueDataset):
+    def __init__(
+            self,
+            names: Union[pd.DataFrame, str],
+            modalities: List[str],
+            data_dir: str,
+    ):
+        super().__init__(names=names, modalities=modalities, data_dir=data_dir)
+
+    def __getitem__(self, item):
+        data = super().__getitem__(item)
+        score = torch.zeros(size=(len(self.names), ))
+        score[item] = 1
+        data.update({'score': score})
+        return data
