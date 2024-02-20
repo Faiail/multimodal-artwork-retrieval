@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# text to image projector
+sbatch -o text2img_proj.out -e text2img_proj.out train_projector configs_cineca/train_text_img_proj.yaml
+
+# text 2 graph projector
+sbatch -o text2graph_proj.out -e text2graph_proj.out train_projector configs_cineca/train_text_graph_proj.yaml
+
+# image 2 text projector
+sbatch -o image2text_proj.out -e image2text_proj.out train_projector configs_cineca/train_img_text_proj.yaml
+
+# image 2 graph projector
+sbatch -o image2graph_proj.out -e image2graph_proj.out train_projector configs_cineca/train_img_graph_proj.yaml
