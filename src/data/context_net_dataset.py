@@ -148,7 +148,7 @@ class ContextNetRankerTestDataset(Dataset):
         return len(self.dataset)
 
 
-def collate_fn(batched_input):
+def collate_test_fn(batched_input):
     out = {}
     if 'image' in list(batched_input[0].keys()):
         images = torch.stack([x['image'] for x in batched_input])

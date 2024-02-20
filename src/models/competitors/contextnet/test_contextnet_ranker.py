@@ -3,7 +3,7 @@ from src.models.competitors.contextnet.context_net_ranker import ContextNetRanke
 from src.utils import load_ruamel
 from src.models.utils import parse_args
 from torch.utils.data import DataLoader
-from src.data.context_net_dataset import ContextNetRankerTestDataset, collate_fn
+from src.data.context_net_dataset import ContextNetRankerTestDataset, collate_test_fn
 import torch
 import joblib
 from tqdm import tqdm
@@ -147,8 +147,8 @@ def main():
     model = _init_model(parameters['model'])
     catalogue_dataset, test_dataset = _init_datasets(parameters['dataset'])
 
-    catalogue_loader = DataLoader(catalogue_dataset, collate_fn=collate_fn,  **parameters['dataloader'])
-    test_loader = DataLoader(test_dataset,  collate_fn=collate_fn, **parameters['dataloader'])
+    catalogue_loader = DataLoader(catalogue_dataset, collate_fn=collate_test_fn,  **parameters['dataloader'])
+    test_loader = DataLoader(test_dataset,  collate_fn=collate_test_fn, **parameters['dataloader'])
 
 
     metrics = _init_metrics(parameters['metrics'])
