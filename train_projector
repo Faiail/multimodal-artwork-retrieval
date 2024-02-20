@@ -13,4 +13,4 @@
 #SBATCH --out=trainContextNet.out
 #SBATCH --err=trainContextNet.out
 
-srun ./train_projector_exe @1
+srun ./train_projector_exe $1
