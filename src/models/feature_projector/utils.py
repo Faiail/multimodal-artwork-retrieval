@@ -35,6 +35,7 @@ def train_model(
     model = model.to(device)
     for epoch in range(1, num_epochs + 1):
         for phase, loader in loaders.items():
+            print(f'Doing {phase}')
             cumulated_loss = 0.0
             with torch.set_grad_enabled(phase == 'train'):
                 iter_loader = tqdm(loader) if pbar else loader
