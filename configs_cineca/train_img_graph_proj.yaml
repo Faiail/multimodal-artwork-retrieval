@@ -48,7 +48,7 @@ general:
   device: cuda
   num_epochs: 100
   verbose: True
-  pbar: True
+  pbar: False
 hyperopt:
   model__strategy:
     type: choice
@@ -67,5 +67,5 @@ hyperopt:
     range: [5, 10, 15]
 n_trials: 20
 out_dir: data/models/feat_proj_image_graph
-progress_bar: False
+progress_bar: True
 
