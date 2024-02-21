@@ -31,6 +31,7 @@ dataset:
     data_dest_dir: data/processed/complete_embeddings
     data: data/processed/proj/test.csv
 dataloader:
+  batch_size: 1024
   shuffle: True
   drop_last: False
 optimizer:
@@ -57,9 +58,6 @@ hyperopt:
   model__dropout:
     type: uniform
     range: [0.0, 0.5]
-  dataloader__batch_size:
-    type: choice
-    range: [32, 64, 128]
   optimizer__lr:
     type: uniform
     range: [0.0001, 0.001]
