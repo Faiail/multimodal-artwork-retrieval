@@ -34,7 +34,7 @@ dataloader:
   batch_size: 1024
   shuffle: True
   drop_last: False
-  num_workers: 16
+  num_workers: 8
 optimizer:
   weight_decay: 0.0001
 scheduler:
