@@ -12,6 +12,9 @@ import argparse
 from torchvision.transforms import v2
 import nlpaug.augmenter.word as naw
 import open_clip
+import warnings
+
+warnings.filterwarnings('ignore')
 
 
 def parse_args():
