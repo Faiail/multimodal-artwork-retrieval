@@ -84,4 +84,4 @@ encoding:
 test_loop:
   pbar: *pbar
   device: *device
-out_dir: data_tmp/models/artwork_siamese_network_complete
+out_dir: data/models/artwork_siamese_network_complete
