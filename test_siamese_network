@@ -11,6 +11,6 @@
 #SBATCH --mem=123000
 #SBATCH --job-name=test_siamese
 #SBATCH --out=testSiamese.out
-#SBATCH --err=testSiemese.out
+#SBATCH --err=testSiamese.out
 
 srun ./test_siamese_network_exe $1
