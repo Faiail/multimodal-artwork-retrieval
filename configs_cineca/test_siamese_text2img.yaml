@@ -14,40 +14,40 @@ auxiliary_models_cat:
     params:
       in_channels: *h_dim
       out_channels: *h_dim
-      act: relu
-      dropout: 0.01
-      n_layers: 2
-      strategy: 2
-    state_dict: data/models/feat_proj_text_image/model_6.pt
+      act: tanh
+      dropout: 0.15
+      n_layers: 1
+      strategy: 0
+    state_dict: data/models/feat_proj_text_image/model_3.pt
   graph: # text2graph
     params:
       in_channels: *h_dim
       out_channels: *h_dim
-      act: relu
-      dropout: 0.43
-      n_layers: 2
-      strategy: 0
-    state_dict: data/models/feat_proj_text_graph/model_3.pt
+      act: tanh
+      dropout: 0.27
+      n_layers: 1
+      strategy: 2
+    state_dict: data/models/feat_proj_text_graph/model_9.pt
 
 auxiliary_models_query:
   image: # image2txt
     params:
       in_channels: *h_dim
       out_channels: *h_dim
-      act: relu
-      dropout: 0.06
-      n_layers: 2
-      strategy: 1
-    state_dict: data/models/feat_proj_image_text/model_6.pt
+      act: tanh
+      dropout: 0.29
+      n_layers: 3
+      strategy: 2
+    state_dict: data/models/feat_proj_image_text/model_5.pt
   graph: # text 2 graph
     params:
       in_channels: *h_dim
       out_channels: *h_dim
-      act: relu
-      dropout: 0.26
+      act: tanh
+      dropout: 0.43
       n_layers: 1
-      strategy: 1
-    state_dict: data/models/feat_proj_image_graph/model_4.pt
+      strategy: 2
+    state_dict: data/models/feat_proj_image_graph/model_1.pt
 
 dataset:
   catalogue:
