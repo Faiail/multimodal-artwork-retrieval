@@ -3,6 +3,7 @@ import src.models.utils as ut
 import json
 import hyperopt
 import torch
+import numpy as np
 
 
 class BaseOptimizer:
@@ -47,6 +48,7 @@ class BaseOptimizer:
             algo=hyperopt.tpe.suggest,
             max_evals=self.params['n_trials'],
             show_progressbar=self.params["progress_bar"],
+            rstate=np.random.default_rng(42),
         )
         return self.best_params
 

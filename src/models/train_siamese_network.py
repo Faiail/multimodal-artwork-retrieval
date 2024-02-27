@@ -88,18 +88,6 @@ class Optimizer(BaseOptimizer):
 
         return run.launch()
 
-        # return tr_ut.train_model(
-        #     model=model,
-        #     backbone=backbone,
-        #     tokenizer=tokenizer,
-        #     train_loader=train_loader,
-        #     val_loader=val_loader,
-        #     optimizer=optimizer,
-        #     scheduler=scheduler,
-        #     early_stop=early_stop,
-        #     criterion=criterion,
-        #     **parameters["general"]
-        # )
 
     def test_model(self):
         raise NotImplementedError()
