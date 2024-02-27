@@ -9,7 +9,8 @@ from src.data.SiameseDataset import SiameseDataset
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from src.models.loss.loss import BinaryFocalLoss
-from src.models.EarlyStopping import EarlyStopping
+from torch.nn import CosineEmbeddingLoss
+from src.models.EarlyStopping import ParallelEarlyStopping
 import os
 from src.models.artwork_siamese_network import utils as tr_ut
 
@@ -53,12 +54,14 @@ class Optimizer(BaseOptimizer):
 
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **parameters["scheduler"])
 
-        criterion = BinaryFocalLoss(**parameters["criterion"])
+        # add different criteria
+        criterion_out = BinaryFocalLoss(**parameters["criterion_out"])
+        criterion_emb = CosineEmbeddingLoss(**parameters["criterion_emb"])
 
         model_dir = parameters["out_dir"]
         os.makedirs(model_dir, exist_ok=True)
         ut.save_params(f'{model_dir}/params_{self.current_run}.json', params)
-        early_stop = EarlyStopping(path=f'{model_dir}/model_{self.current_run}.pt', **parameters['early_stop'])
+        early_stop = ParallelEarlyStopping(out_dir=f'{model_dir}/{self.current_run}', **parameters['early_stop'])
 
         backbone, _, _ = open_clip.create_model_and_transforms(**parameters["backbone"])
         for p in backbone.parameters():
@@ -68,7 +71,7 @@ class Optimizer(BaseOptimizer):
 
         self.current_run += 1
 
-        return tr_ut.train_model(
+        run = tr_ut.Run(
             model=model,
             backbone=backbone,
             tokenizer=tokenizer,
@@ -77,9 +80,26 @@ class Optimizer(BaseOptimizer):
             optimizer=optimizer,
             scheduler=scheduler,
             early_stop=early_stop,
-            criterion=criterion,
-            **parameters["general"]
+            criterion_out=criterion_out,
+            criterion_emb=criterion_emb,
+            num_epochs=parameters['num_epochs'],
+            bar=parameters['pbar'],
         )
+
+        return run.launch()
+
+        # return tr_ut.train_model(
+        #     model=model,
+        #     backbone=backbone,
+        #     tokenizer=tokenizer,
+        #     train_loader=train_loader,
+        #     val_loader=val_loader,
+        #     optimizer=optimizer,
+        #     scheduler=scheduler,
+        #     early_stop=early_stop,
+        #     criterion=criterion,
+        #     **parameters["general"]
+        # )
 
     def test_model(self):
         raise NotImplementedError()
