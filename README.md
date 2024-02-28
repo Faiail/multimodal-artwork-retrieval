@@ -116,4 +116,10 @@ python -m src.models.competitors.basic_garcia.train_model --params_path configs/
 python -m src.models.competitors.contextnet.preprocess --params_path configs/competitors/preprocess_contextnet.yaml
 ```
 
+* RUN STREAMLIT APP
+```
+python -m streamlit run src/demo/streamlit_demo.py 
+```
+
+
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
