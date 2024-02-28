@@ -93,6 +93,7 @@ class Run:
             scheduler,
             early_stop,
             bar,
+            accelerator=None,
     ):
         self.model = model
         self.backbone = backbone
@@ -106,10 +107,12 @@ class Run:
         self.scheduler = scheduler
         self.early_stop = early_stop
         self.bar = bar
-        kwargs = [
-            DistributedDataParallelKwargs(find_unused_parameters=True),
-        ]
-        self.accelerator = Accelerator(kwargs_handlers=kwargs)
+        self.accelerator = accelerator
+        if self.accelerator is None:
+            kwargs = [
+                DistributedDataParallelKwargs(find_unused_parameters=True),
+            ]
+            self.accelerator = Accelerator(kwargs_handlers=kwargs)
         (
             self.model,
             self.backbone,

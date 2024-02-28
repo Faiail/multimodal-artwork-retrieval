@@ -67,7 +67,7 @@ scheduler:
   factor: 0.1
   patience: 2
   verbose: False
-hyperopt:
+optuna:
   model__fusion_num_heads:
     type: choice
     range: [2, 4, 8]
