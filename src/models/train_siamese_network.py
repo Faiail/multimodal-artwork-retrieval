@@ -164,7 +164,6 @@ class OptunaOptimizer(Optimizer):
                 num_epochs=parameters['num_epochs'],
                 bar=parameters['pbar'],
             )
-
             result = run.launch()
             self.study.tell(result)
             
@@ -185,17 +184,9 @@ def main_optuna():
     params_file = ut.parse_args().params_path
     params = load_ruamel(params_file)
     accelerator = get_accelerator()
-    optimizer = OptunaOptimizer(params = params, accelerator=accelerator)
+    optimizer = OptunaOptimizer(params=params, accelerator=accelerator)
     optimizer.optimize()
     
     
 if __name__ == '__main__':
-    # param_file = ut.parse_args().params_path
-    # optimizer = Optimizer(params=load_ruamel(param_file))
-    # optimizer.optimize()
-
-    # best_model_id = optimizer.find_best_model()
-    # out_dir = optimizer.params['out_dir']
-    # for f in filter(lambda x: f'_{best_model_id}.' not in x, os.listdir(out_dir)):
-    #     os.remove(f"{out_dir}/{f}")
     main_optuna()
