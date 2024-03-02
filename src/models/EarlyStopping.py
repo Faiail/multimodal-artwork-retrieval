@@ -71,7 +71,7 @@ class ParallelEarlyStopping:
 
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(val_loss, accelerator)
+            self.save_checkpoint(val_loss, accelerator, model)
         elif score < self.best_score + self.delta:
             self.counter += 1
             if self.verbose:
