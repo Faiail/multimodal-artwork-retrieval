@@ -110,6 +110,6 @@ general:
   device: cuda
   num_epochs: 50
   verbose: True
-  pbar: False
+  pbar: True
 
 
