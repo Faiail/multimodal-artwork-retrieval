@@ -133,8 +133,8 @@ class Run:
         if not self.bar:
             return enumerate(loader)
         return tqdm(
-            enumerate(self.train_loader),
-            total=len(self.train_loader),
+            enumerate(loader),
+            total=len(loader),
             postfix={"loss": 0},
             desc=f"Epoch {epoch}/{self.num_epochs}",
         )
@@ -206,7 +206,7 @@ class Run:
                 y = data_dict["y"]
                 _, x = zip(*sorted(x.items()))
                 _, y = zip(*sorted(y.items()))
-
+                
                 out = self.model(x, y, return_fused=True)
                 preds = out[ResultDict.PRED].squeeze()
                 fused_a, fused_b = out[ResultDict.FUSED]
