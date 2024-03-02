@@ -222,10 +222,10 @@ class Run:
             return self.accelerator.check_trigger(), -self.early_stop.best_score
 
     def launch(self):
-        print("Start training loop")
+        self.accelerator.print("Start training loop")
         val_loss = None
         for epoch in range(self.num_epochs):
-            print(f"Epoch {epoch}/{self.num_epochs}")
+            self.accelerator.print(f"Epoch {epoch}/{self.num_epochs}")
             self.train_epoch(epoch)
 
             stop, val_loss = self.validate(epoch)
