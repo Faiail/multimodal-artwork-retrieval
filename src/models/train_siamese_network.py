@@ -112,6 +112,7 @@ class OptunaOptimizer(Optimizer):
         self.accelerator = accelerator
         self._get_space()
         # remember to set optuna space
+        # TODO: fix single study for different gpus
         self.study = optuna.create_study(direction="minimize")
 
     def _get_space(self):
