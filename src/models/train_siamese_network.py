@@ -4,7 +4,9 @@ import src.models.utils as ut
 from src.models.optimizer import BaseOptimizer
 from src.data.utils import DataModality
 import open_clip
-from src.models.artwork_siamese_network.ArtworkSiameseNetwork import ArtworkSiameseNetwork
+from src.models.artwork_siamese_network.ArtworkSiameseNetwork import (
+    ArtworkSiameseNetwork,
+)
 from src.data.SiameseDataset import SiameseDataset
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
@@ -16,12 +18,13 @@ from src.models.artwork_siamese_network import utils as tr_ut
 from accelerate import Accelerator, DistributedDataParallelKwargs
 import optuna
 from src.models.utils import get_optuna_distribution
+import json
 
 
 class Optimizer(BaseOptimizer):
     def __init__(
-            self,
-            params,
+        self,
+        params,
     ):
         super().__init__(params)
         self._init_augmentations()
@@ -31,7 +34,9 @@ class Optimizer(BaseOptimizer):
             preprocess_parameters = self.params["dataset"][split].get("preprocess", {})
             for k, v in preprocess_parameters.items():
                 if k == DataModality.IMAGE.value:
-                    _, _, preprocess = open_clip.create_model_and_transforms(**self.params["backbone"])
+                    _, _, preprocess = open_clip.create_model_and_transforms(
+                        **self.params["backbone"]
+                    )
                     preprocess.transforms.pop(2)
                     external_augmentations = ut.convert_image_preprocess(v)
                     for val in external_augmentations:
@@ -43,7 +48,9 @@ class Optimizer(BaseOptimizer):
         return self.params["dataset"]
 
     def objective(self, params):
-        print(f'Making configuration {self.current_run + 1}/{self.params["n_trials"]} with parameters {params}')
+        print(
+            f'Making configuration {self.current_run + 1}/{self.params["n_trials"]} with parameters {params}'
+        )
         parameters = self.apply_params(params)
         model = ArtworkSiameseNetwork(**parameters["model"])
 
@@ -55,7 +62,9 @@ class Optimizer(BaseOptimizer):
 
         optimizer = AdamW(model.parameters(), **parameters["optimizer"])
 
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **parameters["scheduler"])
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, **parameters["scheduler"]
+        )
 
         # add different criteria
         criterion_out = BinaryFocalLoss(**parameters["criterion_out"])
@@ -63,8 +72,10 @@ class Optimizer(BaseOptimizer):
 
         model_dir = parameters["out_dir"]
         os.makedirs(model_dir, exist_ok=True)
-        ut.save_params(f'{model_dir}/params_{self.current_run}.json', params)
-        early_stop = ParallelEarlyStopping(out_dir=f'{model_dir}/{self.current_run}', **parameters['early_stop'])
+        ut.save_params(f"{model_dir}/params_{self.current_run}.json", params)
+        early_stop = ParallelEarlyStopping(
+            out_dir=f"{model_dir}/{self.current_run}", **parameters["early_stop"]
+        )
 
         backbone, _, _ = open_clip.create_model_and_transforms(**parameters["backbone"])
         for p in backbone.parameters():
@@ -85,8 +96,8 @@ class Optimizer(BaseOptimizer):
             early_stop=early_stop,
             criterion_out=criterion_out,
             criterion_emb=criterion_emb,
-            num_epochs=parameters['num_epochs'],
-            bar=parameters['pbar'],
+            num_epochs=parameters["num_epochs"],
+            bar=parameters["pbar"],
         )
 
         return run.launch()
@@ -105,21 +116,29 @@ class OptunaOptimizer(Optimizer):
 
     def _get_space(self):
         params = self.params.get("optuna", {})
-        self.space = {
-            k: get_optuna_distribution(v) for k, v in params.items()
-        }
+        self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
 
     def optimize(self):
         print("Start optimization")
-        for current_run_id in range(self.params.get('n_trials')):
+        for current_run_id in range(self.params.get("n_trials")):
+            self.current_run = current_run_id
             # do not ask multiple times the parameters
             if self.accelerator.is_main_process:
-                self.current_run = current_run_id
                 stage_params = self.study.ask(self.space).params
-                parameters = self.apply_params(stage_params=stage_params)
+                # save stage params to disk
+                with open(f"{self.params.get('out_dir')}/tmp_params.json", "w+") as f:
+                    json.dump(stage_params, f)
             
+            # wait and load params generated
+            self.accelerator.wait_for_everyone()
+            with open(f"{self.params.get('out_dir')}/tmp_params.json", "r") as f:
+                stage_params = json.load(f)
+            parameters = self.apply_params(stage_params=stage_params)
+
             # preparing for the run
-            self.accelerator.print(f'Making configuration {self.current_run + 1}/{self.params["n_trials"]} with parameters {stage_params}')
+            self.accelerator.print(
+                f'Making configuration {self.current_run + 1}/{self.params["n_trials"]} with parameters {stage_params}'
+            )
             model = ArtworkSiameseNetwork(**parameters["model"])
 
             train_data = SiameseDataset(**parameters["dataset"]["train"])
@@ -130,7 +149,9 @@ class OptunaOptimizer(Optimizer):
 
             optimizer = AdamW(model.parameters(), **parameters["optimizer"])
 
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **parameters["scheduler"])
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, **parameters["scheduler"]
+            )
 
             # add different criteria
             criterion_out = BinaryFocalLoss(**parameters["criterion_out"])
@@ -139,10 +160,16 @@ class OptunaOptimizer(Optimizer):
             model_dir = parameters["out_dir"]
             if self.accelerator.is_main_process:
                 os.makedirs(model_dir, exist_ok=True)
-                ut.save_params(f'{model_dir}/params_{self.current_run}.json', stage_params)
-            early_stop = ParallelEarlyStopping(out_dir=f'{model_dir}/{self.current_run}', **parameters['early_stop'])
+                ut.save_params(
+                    f"{model_dir}/params_{self.current_run}.json", stage_params
+                )
+            early_stop = ParallelEarlyStopping(
+                out_dir=f"{model_dir}/{self.current_run}", **parameters["early_stop"]
+            )
 
-            backbone, _, _ = open_clip.create_model_and_transforms(**parameters["backbone"])
+            backbone, _, _ = open_clip.create_model_and_transforms(
+                **parameters["backbone"]
+            )
             for p in backbone.parameters():
                 p.requires_grad = False
             del _
@@ -161,13 +188,11 @@ class OptunaOptimizer(Optimizer):
                 early_stop=early_stop,
                 criterion_out=criterion_out,
                 criterion_emb=criterion_emb,
-                num_epochs=parameters['num_epochs'],
-                bar=parameters['pbar'],
+                num_epochs=parameters["num_epochs"],
+                bar=parameters["pbar"],
             )
             result = run.launch()
             self.study.tell(result)
-            
-
 
     def test_model(self):
         raise NotImplementedError()
@@ -186,7 +211,7 @@ def main_optuna():
     accelerator = get_accelerator()
     optimizer = OptunaOptimizer(params=params, accelerator=accelerator)
     optimizer.optimize()
-    
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     main_optuna()
