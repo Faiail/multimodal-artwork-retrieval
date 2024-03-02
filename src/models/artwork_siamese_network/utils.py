@@ -202,13 +202,15 @@ class Run:
                 score = score.float()
 
                 # update with new format
-                x = tuple(data_dict["x"].values())
-                y = tuple(data_dict["y"].values())
+                x = data_dict["x"]
+                y = data_dict["y"]
+                _, x = zip(*sorted(x.items()))
+                _, y = zip(*sorted(y.items()))
 
                 out = self.model(x, y, return_fused=True)
                 preds = out[ResultDict.PRED].squeeze()
                 fused_a, fused_b = out[ResultDict.FUSED]
-                loss = 0.1 * self.criterion_out(preds, score) + self.criterion_emb(fused_a, fused_b, score)
+                loss = 0.1 * self.criterion_out(preds, score) + 0.9 * self.criterion_emb(fused_a, fused_b, score)
                 self.update_bar(loss=loss.cpu().item(), bar=bar)
                 cumulated_loss = cumulated_loss + loss
             if self.accelerator.is_main_process:
