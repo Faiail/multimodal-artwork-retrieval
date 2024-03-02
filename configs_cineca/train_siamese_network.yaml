@@ -83,9 +83,6 @@ optuna:
   optimizer__lr:
     type: uniform
     range: [0.00001, 0.0001]
-  dataloader__batch_size:
-    type: choice
-    range: [64, 128, 256]
   criterion_out__alpha:
     type: uniform
     range: [0, 1]
@@ -93,7 +90,8 @@ optuna:
     type: choice
     range: [1, 2, 3]
 dataloader:
-  num_workers: 0
+  batch_size: 4096
+  num_workers: 8
   drop_last: False
   shuffle: True
 early_stop:
