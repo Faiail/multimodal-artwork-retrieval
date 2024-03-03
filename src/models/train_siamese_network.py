@@ -132,7 +132,8 @@ class OptunaOptimizer(Optimizer):
             self.current_run = current_run_id
             # do not ask multiple times the parameters
             if self.accelerator.is_main_process:
-                stage_params = self.study.ask(self.space).params
+                trial = self.study.ask(self.space)
+                joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
                 # save stage params to disk
                 with open(f"{self.params.get('out_dir')}/tmp_params.json", "w+") as f:
                     json.dump(stage_params, f)
@@ -141,6 +142,7 @@ class OptunaOptimizer(Optimizer):
             self.accelerator.wait_for_everyone()
             with open(f"{self.params.get('out_dir')}/tmp_params.json", "r") as f:
                 stage_params = json.load(f)
+            trial = joblib.load(f"{self.params.get('out_dir')}/tmp_trial.joblib")
             parameters = self.apply_params(stage_params=stage_params)
 
             # preparing for the run
@@ -200,7 +202,7 @@ class OptunaOptimizer(Optimizer):
                 bar=parameters["pbar"],
             )
             result = run.launch()
-            self.study.tell(result)
+            self.study.tell(trial, result)
 
     def test_model(self):
         raise NotImplementedError()
