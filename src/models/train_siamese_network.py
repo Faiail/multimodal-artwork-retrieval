@@ -127,7 +127,7 @@ class OptunaOptimizer(Optimizer):
         self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
 
     def optimize(self):
-        print("Start optimization")
+        self.accelerator.print("Start optimization")
         for current_run_id in range(self.params.get("n_trials")):
             self.current_run = current_run_id
             # do not ask multiple times the parameters
