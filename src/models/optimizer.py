@@ -15,7 +15,7 @@ class BaseOptimizer:
         self.space = self._get_space()
         self.best_params = None
         self.current_run = 0
-        self._clean_out_dir()
+        #self._clean_out_dir()
 
     def _clean_out_dir(self):
         os.makedirs(self.params['out_dir'], exist_ok=True)
