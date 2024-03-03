@@ -19,6 +19,7 @@ from accelerate import Accelerator, DistributedDataParallelKwargs
 import optuna
 from src.models.utils import get_optuna_distribution
 import json
+import joblib
 
 
 class Optimizer(BaseOptimizer):
@@ -111,9 +112,15 @@ class OptunaOptimizer(Optimizer):
         super().__init__(params)
         self.accelerator = accelerator
         self._get_space()
-        # remember to set optuna space
         # TODO: fix single study for different gpus
-        self.study = optuna.create_study(direction="minimize")
+        self.study = self.create_or_load_study()
+
+    def create_or_load_study(self):
+        if self.accelerator.is_main_process:
+            study = optuna.create_study(direction="minimize")
+            joblib.dump(study, f'{self.params.get("out_dir")}/tmp_study.pkl')
+        self.accelerator.wait_for_everyone()
+        return joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
 
     def _get_space(self):
         params = self.params.get("optuna", {})
@@ -129,7 +136,7 @@ class OptunaOptimizer(Optimizer):
                 # save stage params to disk
                 with open(f"{self.params.get('out_dir')}/tmp_params.json", "w+") as f:
                     json.dump(stage_params, f)
-            
+
             # wait and load params generated
             self.accelerator.wait_for_everyone()
             with open(f"{self.params.get('out_dir')}/tmp_params.json", "r") as f:
