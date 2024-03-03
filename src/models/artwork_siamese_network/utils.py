@@ -215,11 +215,11 @@ class Run:
                 cumulated_loss = cumulated_loss + loss
             if self.accelerator.is_main_process:
                 cumulated_loss = cumulated_loss.cpu().mean().item() / len(self.train_loader)
-                self.early_stop(cumulated_loss, self.accelerator, self.model)
-                self.scheduler.step(cumulated_loss)
-                if self.early_stop.early_stop:
-                    self.accelerator.set_trigger()
-                    self.accelerator.print(f"Early stop at epoch {epoch}/{self.num_epochs}")
+            self.early_stop(cumulated_loss, self.accelerator, self.model)
+            self.scheduler.step(cumulated_loss)
+            if self.early_stop.early_stop:
+                self.accelerator.set_trigger()
+                self.accelerator.print(f"Early stop at epoch {epoch}/{self.num_epochs}")
             self.accelerator.wait_for_everyone()
             return self.accelerator.check_trigger(), -self.early_stop.best_score
 
