@@ -136,7 +136,7 @@ class OptunaOptimizer(Optimizer):
                 joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
                 # save stage params to disk
                 with open(f"{self.params.get('out_dir')}/tmp_params.json", "w+") as f:
-                    json.dump(stage_params, f)
+                    json.dump(trial.params, f)
 
             # wait and load params generated
             self.accelerator.wait_for_everyone()
