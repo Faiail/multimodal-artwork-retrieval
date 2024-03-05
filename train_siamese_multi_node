@@ -14,4 +14,4 @@
 #SBATCH --out=train_siamese.out
 #SBATCH --err=train_siamese.out
 
-srun ./train_siamese_exe $@
+srun ./train_siamese_exe_multi_node $@
