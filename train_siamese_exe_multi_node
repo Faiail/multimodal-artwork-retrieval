@@ -1,4 +1,0 @@
-#!/bin/bash
-source ../.venv/bin/activate
-export TMPDIR=/leonardo_work/IscrC_DIANA/tmp/
-accelerate launch --num_machines 2 -m src.models.train_siamese_network $@
