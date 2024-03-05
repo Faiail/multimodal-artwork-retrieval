@@ -125,24 +125,29 @@ class OptunaOptimizer(Optimizer):
     def _get_space(self):
         params = self.params.get("optuna", {})
         self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
+        
+    def ask_params(self):
+        if self.accelerator.is_main_process:
+            trial=self.study.ask(self.space)
+            joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
+        self.accelerator.wait_for_everyone()
+        return joblib.load(f"{self.params.get('out_dir')}/tmp_trial.joblib")
 
+    def tell_result(self, trial, result):
+        if self.accelerator.is_main_process:
+            self.study.tell(trial, result)
+            joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
+        self.accelerator.wait_for_everyone()
+        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
+    
     def optimize(self):
         self.accelerator.print("Start optimization")
         for current_run_id in range(self.params.get("n_trials")):
             self.current_run = current_run_id
             # do not ask multiple times the parameters
-            if self.accelerator.is_main_process:
-                trial = self.study.ask(self.space)
-                joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
-                # save stage params to disk
-                with open(f"{self.params.get('out_dir')}/tmp_params.json", "w+") as f:
-                    json.dump(trial.params, f)
-
-            # wait and load params generated
-            self.accelerator.wait_for_everyone()
-            with open(f"{self.params.get('out_dir')}/tmp_params.json", "r") as f:
-                stage_params = json.load(f)
-            trial = joblib.load(f"{self.params.get('out_dir')}/tmp_trial.joblib")
+            trial = self.ask_params()
+            stage_params = trial.params
+            
             parameters = self.apply_params(stage_params=stage_params)
 
             # preparing for the run
@@ -202,8 +207,7 @@ class OptunaOptimizer(Optimizer):
                 bar=parameters["pbar"],
             )
             result = run.launch()
-            self.study.tell(trial, result)
-
+            self.tell_result(trial, result)
     def test_model(self):
         raise NotImplementedError()
 
