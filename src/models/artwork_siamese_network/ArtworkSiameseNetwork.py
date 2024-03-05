@@ -1,6 +1,12 @@
 import torch
 from src.models.artwork_siamese_network.fusion_module import FusionModule
 from src.models.feature_projector.FeatureProjector import Strategy
+from enum import Enum
+
+
+class ResultDict(Enum):
+    PRED = "pred"
+    FUSED = "fused"
 
 
 class ArtworkSiameseNetwork(torch.nn.Module):
@@ -57,8 +63,12 @@ class ArtworkSiameseNetwork(torch.nn.Module):
 
         return torch.nn.Sequential(*model)
 
-    def forward(self, x1, x2):
+    def forward(self, x1, x2, return_fused=False):
         fused_a = self.fusion_module(*x1)
         fused_b = self.fusion_module(*x2)
         shared = torch.cat([fused_a, fused_b], dim=-1)
-        return self.model(shared)
+        out = self.model(shared)
+        return out if not return_fused else {
+            ResultDict.PRED: out,
+            ResultDict.FUSED:  (fused_a, fused_b),
+        }

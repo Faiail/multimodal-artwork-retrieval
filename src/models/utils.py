@@ -3,6 +3,7 @@ import nlpaug.augmenter.word as naw
 import argparse
 import hyperopt
 import json
+import optuna
 
 
 def get_distribution(key, value):
@@ -10,6 +11,14 @@ def get_distribution(key, value):
         return hyperopt.hp.choice(key, value['range'])
     if value['type'] == 'uniform':
         return hyperopt.hp.uniform(key, *value['range'])
+    raise ValueError(f'{value["type"]} not supported')
+
+
+def get_optuna_distribution(value):
+    if value['type'] == 'choice':
+        return optuna.distributions.CategoricalDistribution(value['range'])
+    if value['type'] == 'uniform':
+        return optuna.distributions.FloatDistribution(*value['range'])
     raise ValueError(f'{value["type"]} not supported')
 
 

@@ -57,15 +57,17 @@ model:
   fusion_hidden_channels: 512
   fusion_ff_channels: 512
   fusion_out_channels: 512
-criterion:
+criterion_out:
   reduction: mean
+criterion_emb:
+  margin: 0.1
 optimizer:
   weight_decay: 0.0001
 scheduler:
   factor: 0.1
   patience: 2
   verbose: False
-hyperopt:
+optuna:
   model__fusion_num_heads:
     type: choice
     range: [2, 4, 8]
@@ -81,17 +83,15 @@ hyperopt:
   optimizer__lr:
     type: uniform
     range: [0.00001, 0.0001]
-  dataloader__batch_size:
-    type: choice
-    range: [64, 128, 256]
-  criterion__alpha:
+  criterion_out__alpha:
     type: uniform
     range: [0, 1]
-  criterion__gamma:
+  criterion_out__gamma:
     type: choice
     range: [1, 2, 3]
 dataloader:
-  num_workers: 16
+  batch_size: 2048
+  num_workers: 8
   drop_last: False
   shuffle: True
 early_stop:
@@ -105,11 +105,10 @@ tokenizer:
 n_trials: 20
 out_dir: data/models/artwork_siamese_network_complete
 progress_bar: True
-general:
-  accum_iter: 5
-  device: cuda
-  num_epochs: 50
-  verbose: True
-  pbar: True
+accum_iter: 5
+device: cuda
+num_epochs: 1
+verbose: True
+pbar: True
 
 
