@@ -125,10 +125,10 @@ class OptunaOptimizer(Optimizer):
     def _get_space(self):
         params = self.params.get("optuna", {})
         self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
-        
+
     def ask_params(self):
         if self.accelerator.is_main_process:
-            trial=self.study.ask(self.space)
+            trial = self.study.ask(self.space)
             joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
         self.accelerator.wait_for_everyone()
         return joblib.load(f"{self.params.get('out_dir')}/tmp_trial.joblib")
@@ -139,7 +139,7 @@ class OptunaOptimizer(Optimizer):
             joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
         self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
-    
+
     def optimize(self):
         self.accelerator.print("Start optimization")
         for current_run_id in range(self.params.get("n_trials")):
@@ -147,7 +147,7 @@ class OptunaOptimizer(Optimizer):
             # do not ask multiple times the parameters
             trial = self.ask_params()
             stage_params = trial.params
-            
+
             parameters = self.apply_params(stage_params=stage_params)
 
             # preparing for the run
@@ -208,6 +208,7 @@ class OptunaOptimizer(Optimizer):
             )
             result = run.launch()
             self.tell_result(trial, result)
+
     def test_model(self):
         raise NotImplementedError()
 
