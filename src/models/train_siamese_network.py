@@ -139,7 +139,20 @@ class OptunaOptimizer(Optimizer):
             joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
         self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
+        
+    def get_best_trial(self):
+        if self.accelerator.is_main_process:
+            best_trial = self.study.best_trial
+            joblib.dump(best_trial, f'{self.params.get("out_dir")}/tmp_best_trial.pkl')
+        self.accelerator.wait_for_everyone()
+        best_trial = joblib.load(f'{self.params.get("out_dir")}/tmp_best_trial.pkl')
+        return best_trial        
 
+    def remove_tmp(self):
+        for f in os.listdir(self.params.get("out_dir")):
+            if f.startswith("tmp"):
+                os.remove(f'{self.params.get("out_dir")}/{f}')
+        
     def optimize(self):
         self.accelerator.print("Start optimization")
         for current_run_id in range(self.params.get("n_trials")):
@@ -205,9 +218,11 @@ class OptunaOptimizer(Optimizer):
                 criterion_emb=criterion_emb,
                 num_epochs=parameters["num_epochs"],
                 bar=parameters["pbar"],
+                accelerator=self.accelerator,
             )
             result = run.launch()
             self.tell_result(trial, result)
+    
 
     def test_model(self):
         raise NotImplementedError()
@@ -226,7 +241,10 @@ def main_optuna():
     accelerator = get_accelerator()
     optimizer = OptunaOptimizer(params=params, accelerator=accelerator)
     optimizer.optimize()
-
+    best_trial = optimizer.get_best_trial()
+    accelerator.print(best_trial)
+    optimizer.remove_tmp()
+    joblib.dump(best_trial, f'{params.get("out_dir")}/best_trial.pkl')
 
 if __name__ == "__main__":
     main_optuna()

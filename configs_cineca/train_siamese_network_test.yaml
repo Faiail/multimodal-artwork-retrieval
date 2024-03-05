@@ -102,7 +102,7 @@ backbone:
     pretrained: laion2b_s34b_b79k
 tokenizer:
   model_name: ViT-B-32
-n_trials: 20
+n_trials: 1
 out_dir: data/models/artwork_siamese_network_complete
 progress_bar: True
 accum_iter: 5

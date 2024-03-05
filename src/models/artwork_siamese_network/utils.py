@@ -110,7 +110,7 @@ class Run:
         self.accelerator = accelerator
         if self.accelerator is None:
             kwargs = [
-                DistributedDataParallelKwargs(find_unused_parameters=True),
+                DistributedDataParallelKwargs(find_unused_parameters=False),
             ]
             self.accelerator = Accelerator(kwargs_handlers=kwargs)
         (
