@@ -149,9 +149,10 @@ class OptunaOptimizer(Optimizer):
         return best_trial        
 
     def remove_tmp(self):
-        for f in os.listdir(self.params.get("out_dir")):
-            if f.startswith("tmp"):
-                os.remove(f'{self.params.get("out_dir")}/{f}')
+        if self.accelerator.is_main_process:
+            for f in os.listdir(self.params.get("out_dir")):
+                if f.startswith("tmp"):
+                    os.remove(f'{self.params.get("out_dir")}/{f}')
         
     def optimize(self):
         self.accelerator.print("Start optimization")
