@@ -1,0 +1,113 @@
+dataset:
+  train:
+    modalities: [image, text, graph]
+    mode:
+      image: raw
+      text: raw
+      graph: embedding
+    data_dirs:
+      image: data/raw/images-resized
+      text: data/processed/proj/train.csv
+      graph: data/processed/complete_embeddings
+    dataset: data/processed/scores/train/data.csv
+    names: data/processed/proj/train.csv
+    preprocess:
+      image:
+        RandomHorizontalFlip:
+          p: 0.5
+        RandomPerspective:
+          distortion_scale: 0.6
+          p: 0.5
+      text:
+        RandomWordAug:
+          action: delete
+          aug_p: 0.4
+        SynonymAug:
+          aug_src: wordnet
+          aug_p: 0.4
+    score_strategy: discrete
+  val:
+    modalities: [image, text, graph]
+    mode:
+      image: embedding
+      text: embedding
+      graph: embedding
+    data_dirs:
+      image: data/processed/complete_embeddings
+      text: data/processed/complete_embeddings
+      graph: data/processed/complete_embeddings
+    dataset: data/processed/scores/val/data.csv
+    names: data/processed/proj/val.csv
+    score_strategy: discrete
+  test:
+    modalities: [image, text, graph]
+    mode:
+      image: embedding
+      text: embedding
+      graph: embedding
+    data_dirs:
+      image: data/processed/complete_embeddings
+      text: data/processed/complete_embeddings
+      graph: data/processed/complete_embeddings
+    dataset: data/processed/scores/test/data.csv
+    names: data/processed/proj/test.csv
+    score_strategy: discrete
+model:
+  fusion_in_channels: 512
+  fusion_hidden_channels: 512
+  fusion_ff_channels: 512
+  fusion_out_channels: 512
+criterion_out:
+  reduction: mean
+criterion_emb:
+  margin: 0.1
+optimizer:
+  weight_decay: 0.0001
+scheduler:
+  factor: 0.1
+  patience: 5
+  verbose: False
+optuna:
+  model__fusion_num_heads:
+    type: choice
+    range: [2, 4, 8]
+  model__dropout:
+    type: uniform
+    range: [0, 1]
+  model__strategy:
+    type: choice
+    range: [0, 1, 2]
+  model__num_layers:
+    type: choice
+    range: [1, 2, 3]
+  optimizer__lr:
+    type: uniform
+    range: [0.00001, 0.0001]
+  criterion_out__alpha:
+    type: uniform
+    range: [0, 1]
+  criterion_out__gamma:
+    type: choice
+    range: [1, 2, 3]
+dataloader:
+  batch_size: 2048
+  num_workers: 32
+  drop_last: False
+  shuffle: True
+early_stop:
+  patience: 20
+  verbose: True
+backbone:
+    model_name: ViT-B-32
+    pretrained: laion2b_s34b_b79k
+tokenizer:
+  model_name: ViT-B-32
+n_trials: 20
+out_dir: data/models/artwork_siamese_network_complete
+progress_bar: True
+device: cuda
+num_epochs: 50
+verbose: True
+pbar: True
+
+
