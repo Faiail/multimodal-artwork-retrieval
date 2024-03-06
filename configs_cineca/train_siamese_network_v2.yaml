@@ -103,9 +103,7 @@ backbone:
 tokenizer:
   model_name: ViT-B-32
 n_trials: 20
-out_dir: data/models/artwork_siamese_network_complete
-progress_bar: True
-device: cuda
+out_dir: data/models/artwork_siamese_network_complete_v2
 num_epochs: 50
 verbose: True
 pbar: True
