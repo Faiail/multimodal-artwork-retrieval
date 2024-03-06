@@ -91,7 +91,7 @@ optuna:
     range: [1, 2, 3]
 dataloader:
   batch_size: 2048
-  num_workers: 32
+  num_workers: 16
   drop_last: False
   shuffle: True
 early_stop:
