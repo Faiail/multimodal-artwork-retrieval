@@ -112,6 +112,7 @@ class OptunaOptimizer(Optimizer):
         super().__init__(params)
         self.accelerator = accelerator
         self._get_space()
+        os.makedirs(params.get("out_dir"), exist_ok=True)
         # TODO: fix single study for different gpus
         self.study = self.create_or_load_study()
 
