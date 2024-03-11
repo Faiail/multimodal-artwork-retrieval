@@ -225,6 +225,7 @@ class Run:
                 best_loss = accelerate.utils.broadcast(best_loss)
                 self.accelerator.print("Best loss broadcasted!!")
             self.accelerator.wait_for_everyone()
+            self.accelerator.print("waited. Returning loss!")
             return self.accelerator.check_trigger(), best_loss.cpu().item()
 
     def launch(self):
