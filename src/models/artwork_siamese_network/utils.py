@@ -222,7 +222,7 @@ class Run:
                     self.accelerator.set_trigger()
                     self.accelerator.print(f"Early stop at epoch {epoch}/{self.num_epochs}")
                     best_loss = torch.as_tensor([-self.early_stop.best_score]).to(self.accelerator.device)
-                    accelerate.utils.broadcast(best_loss)
+                best_loss = accelerate.utils.broadcast(best_loss)
             self.accelerator.wait_for_everyone()
             return self.accelerator.check_trigger(), best_loss.cpu().item()
 
