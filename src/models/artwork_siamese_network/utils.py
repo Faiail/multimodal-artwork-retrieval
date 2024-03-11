@@ -216,14 +216,16 @@ class Run:
             cumulated_loss = self.accelerator.gather(cumulated_loss).sum().cpu().item() / len(self.val_loader)
             self.accelerator.print(f"Epoch {epoch}/{self.num_epochs}: validation loss: {cumulated_loss:.4f}")
             self.scheduler.step(cumulated_loss)
+            best_loss = torch.empty(size=(1, ), device=self.accelerator.device)
             if self.accelerator.is_main_process:
                 self.early_stop(cumulated_loss, self.accelerator, self.model)
                 if self.early_stop.early_stop:
                     self.accelerator.set_trigger()
                     self.accelerator.print(f"Early stop at epoch {epoch}/{self.num_epochs}")
                 best_loss = torch.as_tensor([-self.early_stop.best_score]).to(self.accelerator.device)
-            self.accelerator.wait_for_everyone()
             best_loss = accelerate.utils.broadcast(best_loss)
+            print(best_loss)
+            exit()
             self.accelerator.print("Best loss broadcasted!!")
             self.accelerator.wait_for_everyone()
             self.accelerator.print("waited. Returning loss!")
