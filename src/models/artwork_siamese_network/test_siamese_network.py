@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 import torchmetrics
 import os
-from typing import Any
+from typing import Any, Tuple
 import json
 
 
@@ -30,7 +30,7 @@ def _init_aux_models(params: dict) -> dict[str, FeatureProjector]:
     return out
 
 
-def _init_datasets(params: dict) -> (SiameseCatalogueDataset, SiameseTestDataset):
+def _init_datasets(params: dict) -> Tuple[SiameseCatalogueDataset, SiameseTestDataset]:
     catalogue_dataset = SiameseCatalogueDataset(**params.get('catalogue'))
     test_dataset = SiameseTestDataset(**params.get('test'))
     return catalogue_dataset, test_dataset
@@ -51,7 +51,7 @@ def _prepare_for_metrics(
         predictions: torch.Tensor,
         target: torch.Tensor,
         device: str = 'cuda',
-) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     flat_pred = predictions.view(-1).clone().cpu()
     flat_target = target.view(-1).clone().cpu()
     flat_indexes = _get_indexes(cat_dim=predictions.size(1), b_s=predictions.size(0), device=device)
