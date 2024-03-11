@@ -105,7 +105,7 @@ class SiameseDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.dataset)
+        return 10 #len(self.dataset)
 
 
 class SiameseCatalogueDataset(Dataset):
