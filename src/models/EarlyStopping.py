@@ -86,7 +86,7 @@ class ParallelEarlyStopping:
     def save_checkpoint(self, val_loss, accelerator: Accelerator, model: torch.nn.Module):
         '''Saves model when validation loss decrease.'''
         if self.verbose:
-            self.trace_func(
+            accelerator.print(
                 f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         self.val_loss_min = val_loss
         accelerator.save_model(model, self.out_dir, safe_serialization=True)
