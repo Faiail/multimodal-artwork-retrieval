@@ -183,8 +183,8 @@ class Run:
             preds = out[ResultDict.PRED].squeeze()
             fused_a, fused_b = out[ResultDict.FUSED]
             loss = 0.1 * self.criterion_out(preds, score) + 0.9 * self.criterion_emb(fused_a, fused_b, score)
-            self.update_bar(loss=loss.cpu().item(), bar=bar)
             cumulated_loss = cumulated_loss + loss
+            self.update_bar(loss=cumulated_loss.cpu().item(), bar=bar)
             self.accelerator.backward(loss)
             self.optimizer.step()
             self.optimizer.zero_grad()
@@ -211,8 +211,8 @@ class Run:
                 preds = out[ResultDict.PRED].squeeze()
                 fused_a, fused_b = out[ResultDict.FUSED]
                 loss = 0.1 * self.criterion_out(preds, score) + 0.9 * self.criterion_emb(fused_a, fused_b, score)
-                self.update_bar(loss=loss.cpu().item(), bar=bar)
                 cumulated_loss = cumulated_loss + loss
+                self.update_bar(loss=cumulated_loss.cpu().item(), bar=bar)
             cumulated_loss = self.accelerator.gather(cumulated_loss).sum().cpu().item() / len(self.val_loader)
             self.accelerator.print(f"Epoch {epoch}/{self.num_epochs}: validation loss: {cumulated_loss:.4f}")
             self.scheduler.step(cumulated_loss)
@@ -222,7 +222,7 @@ class Run:
                     self.accelerator.set_trigger()
                     self.accelerator.print(f"Early stop at epoch {epoch}/{self.num_epochs}")
                     best_loss = torch.as_tensor([-self.early_stop.best_score]).to(self.accelerator.device)
-                best_loss = accelerate.utils.broadcast(best_loss)
+                    best_loss = accelerate.utils.broadcast(best_loss)
             self.accelerator.wait_for_everyone()
             return self.accelerator.check_trigger(), best_loss.cpu().item()
 
