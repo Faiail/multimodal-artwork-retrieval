@@ -218,7 +218,7 @@ class Run:
             self.scheduler.step(cumulated_loss)
             best_loss = torch.empty(size=(1, ), device=self.accelerator.device)
             if self.accelerator.is_main_process:
-                self.early_stop(cumulated_loss, self.accelerator, self.model)
+                self.early_stop(cumulated_loss, self.accelerator)
                 if self.early_stop.early_stop:
                     self.accelerator.set_trigger()
                     self.accelerator.print(f"Early stop at epoch {epoch}/{self.num_epochs}")
