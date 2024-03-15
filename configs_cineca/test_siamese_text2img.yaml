@@ -8,7 +8,7 @@ model:
     dropout: 0.0
     strategy: 2
     num_layers: 1
-  state_dict: data/models/artwork_siamese_network_complete/14/model.safetensors
+  state_dict: data/models/artwork_siamese_network_complete/14
 auxiliary_models_cat:
   image: # text2img
     params:
