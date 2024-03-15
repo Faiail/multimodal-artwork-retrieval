@@ -4,11 +4,11 @@ model:
     fusion_hidden_channels: *h_dim
     fusion_ff_channels: *h_dim
     fusion_out_channels: *h_dim
-    fusion_num_heads: 8
-    dropout: 0.48
+    fusion_num_heads: 4
+    dropout: 0.0
     strategy: 2
-    num_layers: 2
-  state_dict: data/models/artwork_siamese_network_complete/model_0.pt
+    num_layers: 1
+  state_dict: data/models/artwork_siamese_network_complete/14/model.safetensors
 auxiliary_models_cat:
   image: # text2img
     params:
@@ -78,7 +78,7 @@ metrics:
     params:
       top_k: 10
 encoding:
-  pbar: &pbar rTrue
+  pbar: &pbar True
   device: &device cuda
 
 test_loop:
