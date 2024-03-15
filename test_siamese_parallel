@@ -13,4 +13,4 @@
 #SBATCH --out=testSiamese_parallel.out
 #SBATCH --err=testSiamese_parallel.out
 
-srun ./test_siamese_network_exe $1
+srun ./test_siamese_network_exe $@
