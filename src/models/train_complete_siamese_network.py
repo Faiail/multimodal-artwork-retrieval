@@ -151,7 +151,7 @@ class CompleteOptunaOptimizer(Optimizer):
 
 def get_accelerator() -> Accelerator:
     kwargs = [
-        DistributedDataParallelKwargs(find_unused_parameters=True),
+        DistributedDataParallelKwargs(find_unused_parameters=False),
     ]
     return Accelerator(kwargs_handlers=kwargs)
 
