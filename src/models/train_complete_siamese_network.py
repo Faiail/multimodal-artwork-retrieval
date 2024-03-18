@@ -21,6 +21,9 @@ from src.utils import load_ruamel
 import joblib
 from enum import Enum
 import joblib
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 class ExtFname(Enum):
@@ -151,7 +154,7 @@ class CompleteOptunaOptimizer(Optimizer):
 
 def get_accelerator() -> Accelerator:
     kwargs = [
-        DistributedDataParallelKwargs(find_unused_parameters=False),
+        DistributedDataParallelKwargs(find_unused_parameters=True),
     ]
     return Accelerator(kwargs_handlers=kwargs)
 
