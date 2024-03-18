@@ -66,16 +66,24 @@ class CompleteArtwrokSiameseNetwork(torch.nn.Module):
             }
         )
 
-    def _encode_text(self, x: dict[str,torch.Tensor]) -> dict[str, torch.Tensor]:
+    def _encode_text(self, x: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         return {
             DataModality.IMAGE.value: x[DataModality.IMAGE.value],
             DataModality.TEXT.value: self.image2text(x[DataModality.IMAGE.value]),
-            DataModality.GRAPH.value: self.image2graph(x[DataModality.IMAGE.value]),
+            DataModality.GRAPH.value: (
+                self.image2graph(x[DataModality.IMAGE.value])
+                if DataModality.GRAPH.value not in x.keys()
+                else x[DataModality.GRAPH.value]
+            ),
         }
 
     def _encode_image(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
         return {
             DataModality.IMAGE.value: self.text2image(x[DataModality.TEXT.value]),
             DataModality.TEXT.value: x[DataModality.TEXT.value],
-            DataModality.GRAPH.value: self.text2graph(x[DataModality.TEXT.value]),
+            DataModality.GRAPH.value: (
+                self.text2graph(x[DataModality.TEXT.value])
+                if DataModality.GRAPH.value not in x.keys()
+                else x[DataModality.GRAPH.value]
+            ),
         }
