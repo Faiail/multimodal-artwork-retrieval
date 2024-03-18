@@ -45,15 +45,17 @@ class CompleteOptunaOptimizer(Optimizer):
             self.study = optuna.create_study(direction="minimize")
             joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
+        print("waited")
         self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
-
+        print("sudy loaded")
+        
     def _get_space(self) -> None:
         space = []
         if self.accelerator.is_main_process:
             params = self.params.get("optuna", {})
             space = [{k: get_optuna_distribution(v) for k, v in params.items()}]
             space=accelerate.utils.broadcast_object_list(space)
-        # self.accelerator.wait_for_everyone()
+        self.accelerator.wait_for_everyone()
         print(space)
         self.space = space[0]
 
