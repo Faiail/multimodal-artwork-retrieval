@@ -35,26 +35,8 @@ class CompleteSiameseDataset(Dataset):
         self.preprocess = preprocess if preprocess else {}
         self.score_strategy = score_strategy
         self.max_retry = max_retry
-        self.source_modalities = None
-        self.dest_modalities = None
-        self.reset_modalities()
         
         assert len(possible_modalities) == len(data_dirs) == len(mode)
-
-    def reset_modalities(self) -> None:
-        self.source_modalities = [
-            random.choice([DataModality.IMAGE.value, DataModality.TEXT.value])
-        ]
-        if random.choice(["graph", "no_graph"]) == "graph":
-            self.source_modalities.append(DataModality.GRAPH.value)
-
-        self.dest_modalities = (
-            [DataModality.IMAGE.value]
-            if DataModality.TEXT.value in self.source_modalities
-            else [DataModality.TEXT.value]
-        )
-        if random.choice(["graph", "no_graph"]) == "graph":
-            self.dest_modalities.append(DataModality.GRAPH.value)
             
     def _get_image(self, fname):
         if self.mode[DataModality.IMAGE.value] == Mode.RAW.value:
@@ -116,8 +98,8 @@ class CompleteSiameseDataset(Dataset):
     def __getitem__(self, index) -> Any:
         x, y, score = self.dataset.iloc[index]
         x, y = self.names.iloc[[x, y], 0].tolist()
-        x = {mod: self.get_modality(x, mod) for mod in self.source_modalities}
-        y = {mod: self.get_modality(y, mod) for mod in self.dest_modalities}
+        x = {mod: self.get_modality(x, mod) for mod in self.possible_modalities}
+        y = {mod: self.get_modality(y, mod) for mod in self.possible_modalities}
         
         score = self.get_score(score)
         return {
