@@ -1,4 +1,4 @@
 #!/bin/bash
 source ../.venv/bin/activate
 export TMPDIR=/leonardo_work/IscrC_DIANA/tmp/
-accelerate launch -m src.models.artwork_siamese_network.train_siamese_network $@
+accelerate launch -m src.models.train_complete_siamese_network $@
