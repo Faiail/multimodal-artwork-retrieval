@@ -45,7 +45,7 @@ class CompleteOptunaOptimizer(Optimizer):
             study = optuna.create_study(direction="minimize")
             joblib.dump(study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
-        return joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
+        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
 
     def _get_space(self):
         params = self.params.get("optuna", {})
