@@ -6,3 +6,4 @@ env
 *.zip
 /data
 /data_tmp
+*.out

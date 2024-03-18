@@ -1,0 +1,4 @@
+#!/bin/bash
+source ../.venv/bin/activate
+export TMPDIR=/leonardo_work/IscrC_DIANA/tmp/
+accelerate launch -m src.models.test_siamese_parallel --params_path $1
