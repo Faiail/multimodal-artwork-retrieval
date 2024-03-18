@@ -27,8 +27,10 @@ class CompleteOptunaOptimizer(Optimizer):
         super()._init_augmentations()
         self.accelerator = accelerator
         self._get_space()
+        self.accelerator.print("Space created")
         os.makedirs(params.get("out_dir"), exist_ok=True)
         self._create_study()
+        self.accelerator.print("Study created")
 
     def _create_study(self) -> None:
         self.study = []
