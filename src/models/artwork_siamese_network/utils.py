@@ -2,7 +2,6 @@ import torch
 from tqdm import tqdm
 from src.data.utils import Mode, DataModality
 from accelerate import Accelerator, DistributedDataParallelKwargs
-from src.models.artwork_siamese_network.ArtworkSiameseNetwork import ResultDict
 from torch.utils.data import DataLoader
 import accelerate
 
@@ -240,3 +239,6 @@ class Run:
                 return val_loss
         return val_loss
 
+class ResultDict(Enum):
+    PRED = "pred"
+    FUSED = "fused"
