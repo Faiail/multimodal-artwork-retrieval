@@ -35,42 +35,43 @@ class CompleteOptunaOptimizer(Optimizer):
     def _create_study(self) -> None:
         self.study = []
         if self.accelerator.is_main_process:
-            self.study = optuna.create_study(direction="minimize")
-            accelerate.utils.broadcast_object_list([self.study])
+            self.study = [optuna.create_study(direction="minimize")]
+            accelerate.utils.broadcast_object_list(self.study)
         self.accelerator.wait_for_everyone()
-        self.study = self.study if isinstance(self.study, Study) else self.study[0]
+        self.study = self.study[0]
 
     def _get_space(self) -> None:
         self.space = []
         if self.accelerator.is_main_process:
             params = self.params.get("optuna", {})
-            self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
-            accelerate.utils.broadcast_object_list([self.space])
+            self.space = [{k: get_optuna_distribution(v) for k, v in params.items()}]
+            accelerate.utils.broadcast_object_list(self.space)
         self.accelerator.wait_for_everyone()
-        self.space = self.space if isinstance(self.space, dict) else self.space[0]
+        self.space = self.space[0]
 
     def ask_params(self) -> optuna.Trial:
         trial = []
         if self.accelerator.is_main_process:
-            trial = self.study.ask(self.space)
-            accelerate.utils.broadcast_object_list([trial])
+            trial = [self.study.ask(self.space)]
+            accelerate.utils.broadcast_object_list(trial)
         self.accelerator.wait_for_everyone()
-        return trial[0] if isinstance(trial, list) else trial
+        return trial[0] 
 
     def tell_result(self, trial, result) -> None:
         if self.accelerator.is_main_process:
             self.study.tell(trial, result)
-            accelerate.utils.broadcast_object_list([self.study])
+            self.study = [self.study]
+            accelerate.utils.broadcast_object_list(self.study)
         self.accelerator.wait_for_everyone()
-        self.study = self.study if isinstance(self.study, Study) else self.study[0]
+        self.study = self.study[0]
 
     def get_best_trial(self) -> optuna.Trial:
         best_trial = []
         if self.accelerator.is_main_process:
-            best_trial = self.study.best_trial
-            accelerate.utils.broadcast_object_list([best_trial])
+            best_trial = [self.study.best_trial]
+            accelerate.utils.broadcast_object_list(best_trial)
         self.accelerator.wait_for_everyone()
-        return best_trial[0] if isinstance(best_trial, list) else best_trial
+        return best_trial[0]
 
     def optimize(self):
         self.accelerator.print("Start optimization")
