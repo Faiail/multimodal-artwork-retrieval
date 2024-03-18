@@ -42,46 +42,42 @@ class CompleteOptunaOptimizer(Optimizer):
 
     def _create_study(self) -> None:
         if self.accelerator.is_main_process:
-            self.study = optuna.create_study(direction="minimize")
-            joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
+            study = optuna.create_study(direction="minimize")
+            joblib.dump(study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
-        print("waited")
-        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
-        print("sudy loaded")
-        
-    def _get_space(self) -> None:
-        space = []
-        if self.accelerator.is_main_process:
-            params = self.params.get("optuna", {})
-            space = [{k: get_optuna_distribution(v) for k, v in params.items()}]
-            space=accelerate.utils.broadcast_object_list(space)
-        self.accelerator.wait_for_everyone()
-        print(space)
-        self.space = space[0]
+        return joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
 
-    def ask_params(self) -> optuna.Trial:
-        trial = []
-        if self.accelerator.is_main_process:
-            trial = [self.study.ask(self.space)]
-            accelerate.utils.broadcast_object_list(trial)
-        self.accelerator.wait_for_everyone()
-        return trial[0]
+    def _get_space(self):
+        params = self.params.get("optuna", {})
+        self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
 
-    def tell_result(self, trial, result) -> None:
+    def ask_params(self):
+        if self.accelerator.is_main_process:
+            trial = self.study.ask(self.space)
+            joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
+        self.accelerator.wait_for_everyone()
+        return joblib.load(f"{self.params.get('out_dir')}/tmp_trial.joblib")
+
+    def tell_result(self, trial, result):
         if self.accelerator.is_main_process:
             self.study.tell(trial, result)
-            self.study = [self.study]
-            accelerate.utils.broadcast_object_list(self.study)
+            joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
-        self.study = self.study[0]
-
-    def get_best_trial(self) -> optuna.Trial:
-        best_trial = []
+        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
+        
+    def get_best_trial(self):
         if self.accelerator.is_main_process:
-            best_trial = [self.study.best_trial]
-            accelerate.utils.broadcast_object_list(best_trial)
+            best_trial = self.study.best_trial
+            joblib.dump(best_trial, f'{self.params.get("out_dir")}/tmp_best_trial.pkl')
         self.accelerator.wait_for_everyone()
-        return best_trial[0]
+        best_trial = joblib.load(f'{self.params.get("out_dir")}/tmp_best_trial.pkl')
+        return best_trial        
+
+    def remove_tmp(self):
+        if self.accelerator.is_main_process:
+            for f in os.listdir(self.params.get("out_dir")):
+                if f.startswith("tmp"):
+                    os.remove(f'{self.params.get("out_dir")}/{f}')
 
     def optimize(self):
         self.accelerator.print("Start optimization")
