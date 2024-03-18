@@ -25,6 +25,8 @@ import joblib
 
 class ExtFname(Enum):
     TMP_STUDY = "tmp_study.pkl"
+    TMP_TRIAL = "tmp_trial.pkl"
+    TMP_BEST_TRIAL = "tmp_best_trial.pkl"
 
 
 class CompleteOptunaOptimizer(Optimizer):
@@ -34,18 +36,16 @@ class CompleteOptunaOptimizer(Optimizer):
         self.accelerator = accelerator
         self._get_space()
         self.accelerator.print("Space created")
-        print(f"After the creation: {self.space}")
         os.makedirs(params.get("out_dir"), exist_ok=True)
         self._create_study()
         self.accelerator.print("Study created")
-        print(f"After the creation: {self.study}")
 
     def _create_study(self) -> None:
         if self.accelerator.is_main_process:
             study = optuna.create_study(direction="minimize")
-            joblib.dump(study, f'{self.params.get("out_dir")}/tmp_study.pkl')
+            joblib.dump(study, f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
         self.accelerator.wait_for_everyone()
-        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
+        self.study = joblib.load(f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
 
     def _get_space(self):
         params = self.params.get("optuna", {})
@@ -54,23 +54,23 @@ class CompleteOptunaOptimizer(Optimizer):
     def ask_params(self):
         if self.accelerator.is_main_process:
             trial = self.study.ask(self.space)
-            joblib.dump(trial, f"{self.params.get('out_dir')}/tmp_trial.joblib")
+            joblib.dump(trial, f"{self.params.get('out_dir')}/{ExtFname.TMP_TRIAL.value}")
         self.accelerator.wait_for_everyone()
-        return joblib.load(f"{self.params.get('out_dir')}/tmp_trial.joblib")
+        return joblib.load(f"{self.params.get('out_dir')}/{ExtFname.TMP_TRIAL.value}")
 
     def tell_result(self, trial, result):
         if self.accelerator.is_main_process:
             self.study.tell(trial, result)
-            joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
+            joblib.dump(self.study, f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
         self.accelerator.wait_for_everyone()
-        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
+        self.study = joblib.load(f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
         
     def get_best_trial(self):
         if self.accelerator.is_main_process:
             best_trial = self.study.best_trial
-            joblib.dump(best_trial, f'{self.params.get("out_dir")}/tmp_best_trial.pkl')
+            joblib.dump(best_trial, f'{self.params.get("out_dir")}/{ExtFname.TMP_BEST_TRIAL}')
         self.accelerator.wait_for_everyone()
-        best_trial = joblib.load(f'{self.params.get("out_dir")}/tmp_best_trial.pkl')
+        best_trial = joblib.load(f'{self.params.get("out_dir")}/{ExtFname.TMP_BEST_TRIAL}')
         return best_trial        
 
     def remove_tmp(self):
@@ -163,6 +163,7 @@ def main():
     optimizer = CompleteOptunaOptimizer(params=params, accelerator=accelerator)
     optimizer.optimize()
     best_trial = optimizer.get_best_trial()
+    optimizer.remove_tmp()
     accelerator.print(best_trial)
     if accelerator.is_main_process:
         joblib.dump(best_trial, f'{params.get("out_dir")}/best_trial.pkl')
