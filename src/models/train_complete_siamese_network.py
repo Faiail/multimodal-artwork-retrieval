@@ -27,28 +27,31 @@ class CompleteOptunaOptimizer(Optimizer):
         super()._init_augmentations()
         self.accelerator = accelerator
         self._get_space()
-        print(self.space)
         self.accelerator.print("Space created")
+        print(f"After the creation: {self.space}")
         os.makedirs(params.get("out_dir"), exist_ok=True)
         self._create_study()
         self.accelerator.print("Study created")
+        print(f"After the creation: {self.study}")
 
     def _create_study(self) -> None:
-        self.study = []
+        study = []
         if self.accelerator.is_main_process:
-            self.study = [optuna.create_study(direction="minimize")]
-            accelerate.utils.broadcast_object_list(self.study)
+            study = [optuna.create_study(direction="minimize")]
+            accelerate.utils.broadcast_object_list(study)
         self.accelerator.wait_for_everyone()
-        self.study = self.study[0]
+        print(study)
+        self.study = study[0]
 
     def _get_space(self) -> None:
-        self.space = []
+        space = []
         if self.accelerator.is_main_process:
             params = self.params.get("optuna", {})
-            self.space = [{k: get_optuna_distribution(v) for k, v in params.items()}]
-            accelerate.utils.broadcast_object_list(self.space)
+            space = [{k: get_optuna_distribution(v) for k, v in params.items()}]
+            accelerate.utils.broadcast_object_list(space)
         self.accelerator.wait_for_everyone()
-        self.space = self.space[0]
+        print(space)
+        self.space = space[0]
 
     def ask_params(self) -> optuna.Trial:
         trial = []
