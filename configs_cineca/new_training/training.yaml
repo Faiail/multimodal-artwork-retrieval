@@ -42,41 +42,41 @@ dataset:
 model:
   name: complete_siamese_network
   text2image:
-    in_channels: *h_channels 512
-    out_channels: &h_channels
+    in_channels: &h_channels 512
+    out_channels: *h_channels
     strategy: 0
     n_layers: 1
     act: tanh
-    dropout: *dropout 0.25
+    dropout: &dropout 0.25
   text2graph:
-    in_channels: &h_channels 
-    out_channels: &h_channels 
+    in_channels: *h_channels
+    out_channels: *h_channels
     strategy: 0
     n_layers: 1
     act: tanh
-    dropout: &dropout
+    dropout: *dropout
   image2text:
-    in_channels: &h_channels 
-    out_channels: &h_channels 
+    in_channels: *h_channels
+    out_channels: *h_channels
     strategy: 0
     n_layers: 1
     act: tanh
-    dropout: &dropout
+    dropout: *dropout
   image2graph:
-    in_channels: &h_channels 
-    out_channels: &h_channels 
+    in_channels: *h_channels
+    out_channels: *h_channels
     strategy: 0
     n_layers: 1
     act: tanh
-    dropout: &dropout
+    dropout: *dropout
   fusion_module:
-    in_channels: &h_channels 
-    hidden_channels: &h_channels 
-    ff_channels: &h_channels 
-    out_channels: &h_channels 
-    dropout: &dropout
+    in_channels: *h_channels
+    hidden_channels: *h_channels
+    ff_channels: *h_channels
+    out_channels: *h_channels
+    dropout: *dropout
     num_heads: 8
-  dropout: &dropout
+  dropout: *dropout
 criterion_out:
   reduction: mean
 criterion_emb:
@@ -86,6 +86,7 @@ optimizer:
 scheduler:
   factor: 0.1
   patience: 2
+  cooldown: 2
   verbose: False
 optuna:
   optimizer__lr:
@@ -103,7 +104,7 @@ dataloader:
   drop_last: False
   shuffle: True
 early_stop:
-  patience: 5
+  patience: 10
   verbose: False
 backbone:
     model_name: ViT-B-32
