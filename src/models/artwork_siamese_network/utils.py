@@ -4,7 +4,7 @@ from src.data.utils import Mode, DataModality
 from accelerate import Accelerator, DistributedDataParallelKwargs
 from torch.utils.data import DataLoader
 import accelerate
-
+from enum import Enum
 
 def train_model(
         model,
