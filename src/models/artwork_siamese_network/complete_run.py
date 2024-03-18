@@ -69,7 +69,7 @@ class CompleteRun(Run):
             # update with new format here
             x = data_dict["x"]
             y = data_dict["y"]
-            self.train_loader.dataset.resetet_modalities()
+            self.train_loader.dataset.reset_modalities()
 
             out = self.model(x, y, return_fused=True)
             preds = out[ResultDict.PRED].squeeze()
