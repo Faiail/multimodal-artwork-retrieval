@@ -19,6 +19,12 @@ from src.models.artwork_siamese_network.complete_run import CompleteRun
 import open_clip
 from src.utils import load_ruamel
 import joblib
+from enum import Enum
+import joblib
+
+
+class ExtFname(Enum):
+    TMP_STUDY = "tmp_study.pkl"
 
 
 class CompleteOptunaOptimizer(Optimizer):
@@ -35,13 +41,11 @@ class CompleteOptunaOptimizer(Optimizer):
         print(f"After the creation: {self.study}")
 
     def _create_study(self) -> None:
-        study = []
         if self.accelerator.is_main_process:
-            study = [optuna.create_study(direction="minimize")]
-            accelerate.utils.broadcast_object_list(study)
+            self.study = optuna.create_study(direction="minimize")
+            joblib.dump(self.study, f'{self.params.get("out_dir")}/tmp_study.pkl')
         self.accelerator.wait_for_everyone()
-        print(study)
-        self.study = study[0]
+        self.study = joblib.load(f'{self.params.get("out_dir")}/tmp_study.pkl')
 
     def _get_space(self) -> None:
         space = []
@@ -59,7 +63,7 @@ class CompleteOptunaOptimizer(Optimizer):
             trial = [self.study.ask(self.space)]
             accelerate.utils.broadcast_object_list(trial)
         self.accelerator.wait_for_everyone()
-        return trial[0] 
+        return trial[0]
 
     def tell_result(self, trial, result) -> None:
         if self.accelerator.is_main_process:
