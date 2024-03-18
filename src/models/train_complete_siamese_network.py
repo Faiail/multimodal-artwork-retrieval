@@ -53,7 +53,7 @@ class CompleteOptunaOptimizer(Optimizer):
             params = self.params.get("optuna", {})
             space = [{k: get_optuna_distribution(v) for k, v in params.items()}]
             accelerate.utils.broadcast_object_list(space)
-        self.accelerator.wait_for_everyone()
+        # self.accelerator.wait_for_everyone()
         print(space)
         self.space = space[0]
 
