@@ -23,10 +23,11 @@ import joblib
 
 class CompleteOptunaOptimizer(Optimizer):
     def __init__(self, params, accelerator: Accelerator):
-        super().__init__(params)
+        self.params = params
+        super()._init_augmentations()
         self.accelerator = accelerator
         self._get_space()
-        os.make_dirs(params.get("out_dir"), exists_ok=True)
+        os.makedirs(params.get("out_dir"), exist_ok=True)
         self._create_study()
 
     def _create_study(self) -> None:
