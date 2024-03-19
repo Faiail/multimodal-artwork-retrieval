@@ -112,7 +112,7 @@ backbone:
 tokenizer:
   model_name: ViT-B-32
 n_trials: 20
-out_dir: data/models/new_training_siamese_complete
+out_dir: data/models/new_training_expand_siamese_complete
 progress_bar: True
 num_epochs: 50
 verbose: True
