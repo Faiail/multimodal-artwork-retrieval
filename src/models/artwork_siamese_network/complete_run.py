@@ -122,7 +122,7 @@ class CompleteRun(Run):
                 y = data_dict["y"]
                 y = {k: v for k, v in y.items() if k in self.dest_modalities}
 
-                self.val_loader.dataset.reset_modalities()
+                self.reset_modalities()
                 out = self.model(x, y, return_fused=True)
                 preds = out[ResultDict.PRED].squeeze()
                 fused_a, fused_b = out[ResultDict.FUSED]
