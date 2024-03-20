@@ -22,6 +22,7 @@ import joblib
 from enum import Enum
 import joblib
 import warnings
+from copy import deepcopy
 
 warnings.filterwarnings("ignore")
 
@@ -94,8 +95,9 @@ class CompleteOptunaOptimizer(Optimizer):
             self.accelerator.print(
                 f'Making configuration {self.current_run + 1}/{self.params["n_trials"]} with parameters {stage_params}'
             )
-            model_name = parameters["model"].pop("name")
-            model = model_registry[model_name](parameters["model"])
+            model_params = deepcopy(parameters["model"])
+            model_name = model_params.pop("name")
+            model = model_registry[model_name](model_params)
 
             train_data = CompleteSiameseDataset(**parameters["dataset"]["train"])
             train_loader = DataLoader(dataset=train_data, **parameters["dataloader"])

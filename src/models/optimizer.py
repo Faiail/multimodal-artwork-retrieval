@@ -33,7 +33,7 @@ class BaseOptimizer:
         }
 
     def apply_params(self, stage_params):
-        start_params = deepcopy(self.params)
+        start_params = self.params
         for k, v in stage_params.items():
             key, value = k.split('__')
             start_params[key][value] = v
