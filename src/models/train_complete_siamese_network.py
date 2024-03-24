@@ -153,6 +153,8 @@ class CompleteOptunaOptimizer(Optimizer):
             result = run.launch()
             self.tell_result(trial, result)
 
+    def test(self):
+        raise NotImplementedError()
 
 def get_accelerator() -> Accelerator:
     kwargs = [

@@ -152,3 +152,6 @@ class CompleteRun(Run):
             best_loss = accelerate.utils.broadcast(best_loss)
             self.accelerator.wait_for_everyone()
             return self.accelerator.check_trigger(), best_loss.cpu().item()
+
+    def test(task="text2img"):
+        raise NotImplementedError()
