@@ -3,10 +3,10 @@ import torch
 from src.data import DataModality, Mode
 import accelerate
 import random
+from typing import Tuple
 
 
 class CompleteRun(Run):
-    # TODO: mod for test
     def __init__(
         self,
         model,
@@ -22,10 +22,11 @@ class CompleteRun(Run):
         early_stop,
         bar,
         accelerator=None,
-        test_cat=None,
-        test_query=None,
+        cat_loader=None,
+        query_loader=None,
         metrics=None,
         task=None,
+        state_dict_dir=None,
     ):
         super().__init__(
             model,
@@ -45,11 +46,17 @@ class CompleteRun(Run):
         self.source_modalities = None
         self.dest_modalities = None
         self.reset_modalities()
-        self.test_cat = test_cat
-        self.test_query = test_query
+        self.cat_loader = cat_loader
+        self.query_loader = query_loader
         self.metrics = metrics
         self.task = task
         self.cat_features = None
+        if state_dict_dir is not None:
+            state_dict = torch.load(
+                f"{state_dict_dir}/pytorch_model.bin",
+                map_location=self.accelerator.device,
+            )
+            self.model.load_state_dict(state_dict)
 
     def reset_modalities(self) -> None:
         self.source_modalities = [
@@ -163,11 +170,59 @@ class CompleteRun(Run):
             self.accelerator.wait_for_everyone()
             return self.accelerator.check_trigger(), best_loss.cpu().item()
 
-
     @torch.no_grad
     def _encode_cat_features(self):
-        pass
+        bar = self.get_test_bar(
+            self.cat_loader, desc=f"Extracting cat features for task {self.task}"
+        )
+        for ix, data_dict in bar:
+            data_dict = {k: v.to(self.accelerator.device) for k, v in data_dict.items()}
+            x = self.model.encode(data_dict)
+            fused = self.model.fusion_module(*x)
+            if self.cat_features is None:
+                self.cat_features = torch.zeros(
+                    size=(len(self.cat_loader.dataset), fused.size(1))
+                )
+            self.cat_features[
+                (ix * self.cat_loader.batch_size) : (
+                    (ix + 1) * self.cat_loader.batch_size
+                ),
+                :,
+            ] = fused.cpu()
+        return self.cat_features
+
+    def _get_indexes(self, cat_dim, b_s, device="cuda") -> torch.Tensor:
+        return torch.cat([torch.as_tensor([i] * cat_dim) for i in range(b_s)]).to(
+            device
+        )
+
+    def _prepare_for_metrics(
+        self,
+        predictions: torch.Tensor,
+        target: torch.Tensor,
+        device: str = "cuda",
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        flat_pred = predictions.view(-1).clone().cpu()
+        flat_target = target.view(-1).clone().cpu()
+        flat_indexes = self._get_indexes(
+            cat_dim=predictions.size(1), b_s=predictions.size(0), device=device
+        )
+        return flat_pred, flat_target, flat_indexes
 
     @torch.no_grad
     def test(self):
-        pass
+        self._encode_cat_features()
+        bar = self.get_test_bar(self.query_loader, desc=f"Testing for task {self.task}")
+        for ix, data_dict in bar:
+            label = data_dict.pop("score").to(self.accelerator.device)
+            data_dict = {k: v.to(self.accelerator.device) for k, v in data_dict.items()}
+            x = self.model.encode(data_dict)
+            fused = self.model.fusion_module(*x).cpu()
+            preds = torch.mm(fused, self.cat_features.T)
+            flat_pred, flat_target, flat_indexes = self._prepare_for_metrics(
+                preds, label, device="cpu"
+            )
+
+            for v in self.metrics.values():
+                v.update(flat_pred, flat_target, flat_indexes)
+        return {k: v.compute().detach().item() for k, v in self.metrics.items()}
