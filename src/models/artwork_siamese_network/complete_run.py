@@ -6,6 +6,7 @@ import random
 
 
 class CompleteRun(Run):
+    # TODO: mod for test
     def __init__(
         self,
         model,
@@ -21,6 +22,10 @@ class CompleteRun(Run):
         early_stop,
         bar,
         accelerator=None,
+        test_cat=None,
+        test_query=None,
+        metrics=None,
+        task=None,
     ):
         super().__init__(
             model,
@@ -40,6 +45,11 @@ class CompleteRun(Run):
         self.source_modalities = None
         self.dest_modalities = None
         self.reset_modalities()
+        self.test_cat = test_cat
+        self.test_query = test_query
+        self.metrics = metrics
+        self.task = task
+        self.cat_features = None
 
     def reset_modalities(self) -> None:
         self.source_modalities = [
@@ -153,5 +163,11 @@ class CompleteRun(Run):
             self.accelerator.wait_for_everyone()
             return self.accelerator.check_trigger(), best_loss.cpu().item()
 
-    def test(task="text2img"):
-        raise NotImplementedError()
+
+    @torch.no_grad
+    def _encode_cat_features(self):
+        pass
+
+    @torch.no_grad
+    def test(self):
+        pass
