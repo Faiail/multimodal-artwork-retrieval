@@ -25,6 +25,7 @@ import warnings
 from copy import deepcopy
 import torchmetrics
 from src.data import SiameseTestDataset, SiameseCatalogueDataset
+import json
 
 warnings.filterwarnings("ignore")
 
@@ -184,11 +185,26 @@ class CompleteOptunaOptimizer(Optimizer):
             trial_id = best_trial._trial_id
             best_params = best_trial._params
             parameters = self.apply_params(best_params)
+            parameters["dataloader"]["shuffle"] = False
 
-            for task, task_params in parameters.get("test", {}).items():
-                
+            for task, task_params in parameters.get("dataset").get("test", {}).items():
+                if not task_params:
+                    continue
+                cat_data = SiameseCatalogueDataset(**task_params.get("catalogue"))
+                cat_dataloader = DataLoader(cat_data, **parameters.get("dataloader"))
+                query_data = SiameseTestDataset(**task_params.get("query"))
+                query_dataloader = DataLoader(
+                    query_data, **parameters.get("dataloader")
+                )
+                metrics = self._get_metrics()
+                model_params = deepcopy(parameters["model"])
+                model_name = model_params.pop("name")
+                model = model_registry[model_name](model_params)
+
                 train_data = CompleteSiameseDataset(**parameters["dataset"]["train"])
-                train_loader = DataLoader(dataset=train_data, **parameters["dataloader"])
+                train_loader = DataLoader(
+                    dataset=train_data, **parameters["dataloader"]
+                )
 
                 val_data = CompleteSiameseDataset(**parameters["dataset"]["val"])
                 val_loader = DataLoader(dataset=val_data, **parameters["dataloader"])
@@ -205,7 +221,8 @@ class CompleteOptunaOptimizer(Optimizer):
 
                 model_dir = parameters["out_dir"]
                 early_stop = ParallelEarlyStopping(
-                    out_dir=f"{model_dir}/{self.current_run}", **parameters["early_stop"]
+                    out_dir=f"{model_dir}/{self.current_run}",
+                    **parameters["early_stop"],
                 )
 
                 backbone, _, _ = open_clip.create_model_and_transforms(
@@ -215,20 +232,11 @@ class CompleteOptunaOptimizer(Optimizer):
                     p.requires_grad = False
                 del _
                 tokenizer = open_clip.get_tokenizer(**parameters["tokenizer"])
-                
-                cat_data = SiameseCatalogueDataset(**task_params.get("catalogue"))
-                cat_dataloader = DataLoader(cat_data, **parameters.get("dataloader"))
-                query_data = SiameseTestDataset(**task_params.get("query"))
-                query_dataloader = DataLoader(query_data, **parameters.get("dataloader"))
-                metrics = self._get_metrics()
-                model_params = deepcopy(parameters["model"])
-                model_name = model_params.pop("name")
-                model = model_registry[model_name](model_params)
 
                 criterion_out = BinaryFocalLoss(**parameters["criterion_out"])
                 criterion_emb = CosineEmbeddingLoss(**parameters["criterion_emb"])
-                
-                CompleteRun(
+
+                metrics = CompleteRun(
                     model=model,
                     backbone=backbone,
                     tokenizer=tokenizer,
@@ -242,12 +250,17 @@ class CompleteOptunaOptimizer(Optimizer):
                     num_epochs=parameters["num_epochs"],
                     bar=parameters["pbar"],
                     accelerator=self.accelerator,
-                    test_cat=cat_dataloader,
-                    test_query=query_dataloader,
+                    cat_loader=cat_dataloader,
+                    query_loader=query_dataloader,
                     metrics=metrics,
-                    taks=task,
-                    state_dict_dir=f"{parameters['out_dir']}/{trial_id}"
+                    task=task,
+                    state_dict_dir=f"{parameters['out_dir']}/{trial_id}",
                 ).test()
+                os.makedirs(f'{parameters.get("out_dir")}/{task}', exist_ok=True)
+                with open(
+                    f'{parameters.get("out_dir")}/{task}/test_metrics.json', "w+"
+                ) as f:
+                    json.dump(metrics, f)
 
 
 def get_accelerator() -> Accelerator:
@@ -268,6 +281,7 @@ def main():
     accelerator.print(best_trial)
     if accelerator.is_main_process:
         joblib.dump(best_trial, f'{params.get("out_dir")}/best_trial.pkl')
+    optimizer.test()
 
 
 if __name__ == "__main__":
