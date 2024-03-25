@@ -32,26 +32,22 @@ class CompleteArtwrokSiameseNetwork(torch.nn.Module):
             ),
         )
 
+    def encode(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
+        if DataModality.IMAGE.value not in x.keys():
+            x = self._encode_image(x)
+        elif DataModality.TEXT.value not in x.keys():
+            x = self._encode_text(x)
+        _, x = zip(*sorted(x.items()))
+        return x
+
     def forward(
         self,
         x: dict[str, torch.Tensor],
         y: dict[str, torch.Tensor],
         return_fused: bool = False,
     ) -> torch.Tensor:
-        # encode modalities for x
-        if DataModality.IMAGE.value not in x.keys():
-            x = self._encode_image(x)
-        elif DataModality.TEXT.value not in x.keys():
-            x = self._encode_text(x)
-
-        # encode modalities for y
-        if DataModality.IMAGE.value not in y.keys():
-            y = self._encode_image(y)
-        elif DataModality.TEXT.value not in y.keys():
-            y = self._encode_text(x)
-
-        _, x = zip(*sorted(x.items()))
-        _, y = zip(*sorted(y.items()))
+        x = self.encode(x)
+        y = self.encode(y)
 
         fused_a = self.fusion_module(*x)
         fused_b = self.fusion_module(*y)
