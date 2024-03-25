@@ -23,6 +23,8 @@ from enum import Enum
 import joblib
 import warnings
 from copy import deepcopy
+import torchmetrics
+from src.data import SiameseTestDataset, SiameseCatalogueDataset
 
 warnings.filterwarnings("ignore")
 
@@ -47,9 +49,13 @@ class CompleteOptunaOptimizer(Optimizer):
     def _create_study(self) -> None:
         if self.accelerator.is_main_process:
             study = optuna.create_study(direction="minimize")
-            joblib.dump(study, f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
+            joblib.dump(
+                study, f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}'
+            )
         self.accelerator.wait_for_everyone()
-        self.study = joblib.load(f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
+        self.study = joblib.load(
+            f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}'
+        )
 
     def _get_space(self):
         params = self.params.get("optuna", {})
@@ -58,24 +64,34 @@ class CompleteOptunaOptimizer(Optimizer):
     def ask_params(self):
         if self.accelerator.is_main_process:
             trial = self.study.ask(self.space)
-            joblib.dump(trial, f"{self.params.get('out_dir')}/{ExtFname.TMP_TRIAL.value}")
+            joblib.dump(
+                trial, f"{self.params.get('out_dir')}/{ExtFname.TMP_TRIAL.value}"
+            )
         self.accelerator.wait_for_everyone()
         return joblib.load(f"{self.params.get('out_dir')}/{ExtFname.TMP_TRIAL.value}")
 
     def tell_result(self, trial, result):
         if self.accelerator.is_main_process:
             self.study.tell(trial, result)
-            joblib.dump(self.study, f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
+            joblib.dump(
+                self.study, f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}'
+            )
         self.accelerator.wait_for_everyone()
-        self.study = joblib.load(f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}')
-        
+        self.study = joblib.load(
+            f'{self.params.get("out_dir")}/{ExtFname.TMP_STUDY.value}'
+        )
+
     def get_best_trial(self):
         if self.accelerator.is_main_process:
             best_trial = self.study.best_trial
-            joblib.dump(best_trial, f'{self.params.get("out_dir")}/{ExtFname.TMP_BEST_TRIAL}')
+            joblib.dump(
+                best_trial, f'{self.params.get("out_dir")}/{ExtFname.TMP_BEST_TRIAL}'
+            )
         self.accelerator.wait_for_everyone()
-        best_trial = joblib.load(f'{self.params.get("out_dir")}/{ExtFname.TMP_BEST_TRIAL}')
-        return best_trial        
+        best_trial = joblib.load(
+            f'{self.params.get("out_dir")}/{ExtFname.TMP_BEST_TRIAL}'
+        )
+        return best_trial
 
     def remove_tmp(self):
         if self.accelerator.is_main_process:
@@ -153,8 +169,86 @@ class CompleteOptunaOptimizer(Optimizer):
             result = run.launch()
             self.tell_result(trial, result)
 
+    def _get_metrics(
+        self,
+    ):
+        return {
+            k: torchmetrics.retrieval.__dict__[v["type"]](**v["params"])
+            for k, v in self.params.get("metrics", {}).items()
+        }
+
+    @torch.no_grad
     def test(self):
-        raise NotImplementedError()
+        if self.accelerator.is_main_process:
+            best_trial = joblib.load(f"{self.params['out_dir']}/best_trial.pkl")
+            trial_id = best_trial._trial_id
+            best_params = best_trial._params
+            parameters = self.apply_params(best_params)
+
+            for task, task_params in parameters.get("test", {}).items():
+                
+                train_data = CompleteSiameseDataset(**parameters["dataset"]["train"])
+                train_loader = DataLoader(dataset=train_data, **parameters["dataloader"])
+
+                val_data = CompleteSiameseDataset(**parameters["dataset"]["val"])
+                val_loader = DataLoader(dataset=val_data, **parameters["dataloader"])
+
+                optimizer = AdamW(model.parameters(), **parameters["optimizer"])
+
+                scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                    optimizer, **parameters["scheduler"]
+                )
+
+                # add different criteria
+                criterion_out = BinaryFocalLoss(**parameters["criterion_out"])
+                criterion_emb = CosineEmbeddingLoss(**parameters["criterion_emb"])
+
+                model_dir = parameters["out_dir"]
+                early_stop = ParallelEarlyStopping(
+                    out_dir=f"{model_dir}/{self.current_run}", **parameters["early_stop"]
+                )
+
+                backbone, _, _ = open_clip.create_model_and_transforms(
+                    **parameters["backbone"]
+                )
+                for p in backbone.parameters():
+                    p.requires_grad = False
+                del _
+                tokenizer = open_clip.get_tokenizer(**parameters["tokenizer"])
+                
+                cat_data = SiameseCatalogueDataset(**task_params.get("catalogue"))
+                cat_dataloader = DataLoader(cat_data, **parameters.get("dataloader"))
+                query_data = SiameseTestDataset(**task_params.get("query"))
+                query_dataloader = DataLoader(query_data, **parameters.get("dataloader"))
+                metrics = self._get_metrics()
+                model_params = deepcopy(parameters["model"])
+                model_name = model_params.pop("name")
+                model = model_registry[model_name](model_params)
+
+                criterion_out = BinaryFocalLoss(**parameters["criterion_out"])
+                criterion_emb = CosineEmbeddingLoss(**parameters["criterion_emb"])
+                
+                CompleteRun(
+                    model=model,
+                    backbone=backbone,
+                    tokenizer=tokenizer,
+                    train_loader=train_loader,
+                    val_loader=val_loader,
+                    optimizer=optimizer,
+                    scheduler=scheduler,
+                    early_stop=early_stop,
+                    criterion_out=criterion_out,
+                    criterion_emb=criterion_emb,
+                    num_epochs=parameters["num_epochs"],
+                    bar=parameters["pbar"],
+                    accelerator=self.accelerator,
+                    test_cat=cat_dataloader,
+                    test_query=query_dataloader,
+                    metrics=metrics,
+                    taks=task,
+                    state_dict_dir=f"{parameters['out_dir']}/{trial_id}"
+                ).test()
+
 
 def get_accelerator() -> Accelerator:
     kwargs = [
