@@ -39,6 +39,25 @@ dataset:
     dataset: data/processed/scores/val/data.csv
     names: data/processed/proj/val.csv
     score_strategy: discrete
+  test:
+    text2image:
+      catalogue:
+        names: &csv_file data/processed/proj/test.csv
+        modalities: [text]
+        data_dir: &data_dir data/processed/complete_embeddings
+      query:
+        names: *csv_file
+        modalities: [image]
+        data_dir: *data_dir
+    image2text:
+      catalogue:
+        names: *csv_file
+        modalities: [image]
+        data_dir: *data_dir 
+      query:
+        names: *csv_file
+        modalities: [text]
+        data_dir: *data_dir
 model:
   name: complete_siamese_network
   text2image:
@@ -111,6 +130,19 @@ backbone:
     pretrained: laion2b_s34b_b79k
 tokenizer:
   model_name: ViT-B-32
+metrics:
+  recall_at_1:
+    type: RetrievalRecall
+    params:
+      top_k: 1
+  recall_at_5:
+    type: RetrievalRecall
+    params:
+      top_k: 5
+  recall_at_10:
+    type: RetrievalRecall
+    params:
+      top_k: 10
 n_trials: 20
 out_dir: data/models/new_training_expand_siamese_complete
 progress_bar: True
