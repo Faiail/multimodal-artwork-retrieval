@@ -285,7 +285,6 @@ def main():
     accelerator.print(best_trial)
     if accelerator.is_main_process:
         joblib.dump(best_trial, f'{params.get("out_dir")}/best_trial.pkl')
-    optimizer.test()
 
 
 if __name__ == "__main__":
