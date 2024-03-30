@@ -191,7 +191,9 @@ class CompleteOptunaOptimizer(Optimizer):
 
             for task, task_params in parameters.get("dataset").get("test", {}).items():
                 if not task_params:
+                    self.accelerator.print(f"No task params for task {task}")
                     continue
+                self.accelerator.print(f"Making test for task {task}")
                 cat_data = SiameseCatalogueDataset(**task_params.get("catalogue"))
                 cat_dataloader = DataLoader(cat_data, **parameters.get("dataloader"))
                 query_data = SiameseTestDataset(**task_params.get("query"))
