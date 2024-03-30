@@ -180,8 +180,10 @@ class CompleteOptunaOptimizer(Optimizer):
 
     @torch.no_grad
     def test(self):
+        self.accelerator.print("Start testing...")
         if self.accelerator.is_main_process:
             best_trial = joblib.load(f"{self.params['out_dir']}/best_trial.pkl")
+            self.accelerator.print("Loading best parameters...")
             trial_id = best_trial._trial_id
             best_params = best_trial._params
             parameters = self.apply_params(best_params)
