@@ -143,9 +143,9 @@ metrics:
     type: RetrievalRecall
     params:
       top_k: 10
-n_trials: 20
+n_trials: 1
 out_dir: data/models/new_training_siamese_complete
 progress_bar: True
-num_epochs: 50
+num_epochs: 1
 verbose: True
 pbar: True
