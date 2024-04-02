@@ -112,7 +112,7 @@ class CompleteRun(Run):
             out = self.model(x, y, return_fused=True)
             preds = out[ResultDict.PRED].squeeze()
             fused_a, fused_b = out[ResultDict.FUSED]
-            loss = self.criterion_emb(fused_a, fused_b)
+            loss = self.criterion_emb(fused_a, fused_b, score)
             # loss = 0.1 * self.criterion_out(preds, score) + 0.9 * self.criterion_emb(
             #     fused_a, fused_b, score
             # )
