@@ -52,6 +52,7 @@ class CompleteRun(Run):
         self.task = task
         self.cat_features = None
         if state_dict_dir is not None:
+            self.accelerator.print("Loading state dict...")
             state_dict = torch.load(
                 f"{state_dict_dir}/pytorch_model.bin",
                 map_location=self.accelerator.device,
@@ -222,7 +223,7 @@ class CompleteRun(Run):
             flat_pred, flat_target, flat_indexes = self._prepare_for_metrics(
                 preds, label, device="cpu"
             )
-
+            self.accelerator.print(flat_pred)
             for v in self.metrics.values():
                 v.update(flat_pred, flat_target, flat_indexes)
         return {k: v.compute().detach().item() for k, v in self.metrics.items()}
