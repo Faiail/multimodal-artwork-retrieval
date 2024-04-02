@@ -2,10 +2,9 @@ import torch
 from tqdm import tqdm
 from src.data.utils import Mode, DataModality
 from accelerate import Accelerator, DistributedDataParallelKwargs
-from src.models.artwork_siamese_network.ArtworkSiameseNetwork import ResultDict
 from torch.utils.data import DataLoader
 import accelerate
-
+from enum import Enum
 
 def train_model(
         model,
@@ -130,6 +129,15 @@ class Run:
             self.scheduler, self.optimizer,
         )
 
+    def get_test_bar(self, loader: DataLoader, desc: str):
+        if not self.bar:
+            return enumerate(loader)
+        return tqdm(
+            enumerate(loader),
+            total=len(loader),
+            desc=desc,
+        )
+
     def get_bar(self, loader: DataLoader, epoch: int):
         if not self.bar:
             return enumerate(loader)
@@ -240,3 +248,6 @@ class Run:
                 return val_loss
         return val_loss
 
+class ResultDict(Enum):
+    PRED = "pred"
+    FUSED = "fused"

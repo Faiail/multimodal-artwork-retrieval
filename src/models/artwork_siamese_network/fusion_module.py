@@ -25,7 +25,7 @@ class FusionModule(torch.nn.Module):
         self.proj = torch.nn.Sequential(
             torch.nn.Linear(self.in_channels, self.hidden_channels),
             torch.nn.Dropout(p=self.dropout),
-            torch.nn.ReLU(),
+            torch.nn.GELU(),
         )
         self.attention = torch.nn.MultiheadAttention(
             embed_dim=self.hidden_channels,
@@ -35,7 +35,7 @@ class FusionModule(torch.nn.Module):
         self.fforward = torch.nn.Sequential(
             torch.nn.Linear(self.hidden_channels, self.ff_channels),
             torch.nn.Dropout(p=self.dropout),
-            torch.nn.ReLU(),
+            torch.nn.GELU(),
             torch.nn.Linear(self.ff_channels, self.hidden_channels),
             torch.nn.Dropout(p=self.dropout),
         )

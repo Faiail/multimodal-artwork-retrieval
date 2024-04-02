@@ -4,6 +4,7 @@ import json
 import hyperopt
 import torch
 import numpy as np
+from copy import deepcopy
 
 
 class BaseOptimizer:

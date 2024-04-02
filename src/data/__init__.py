@@ -1,3 +1,5 @@
-from src.data.SiameseDataset import SiameseDataset
+from src.data.SiameseDataset import SiameseDataset, DataModality
 from src.data.basic_ranker_dataset import BasicRankerDataset, BasicGarciaCatalogueDataset, BasicGarciaPredictorDataset
 from src.data.predictor_datasets import PredictorTestDataset, CatalogDataset
+from .complete_siamese_dataset import CompleteSiameseDataset, Mode
+from .SiameseDataset import SiameseCatalogueDataset, SiameseTestDataset
