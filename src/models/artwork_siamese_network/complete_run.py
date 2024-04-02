@@ -221,7 +221,7 @@ class CompleteRun(Run):
             fused = self.model.fusion_module(*x).cpu()
             preds = torch.mm(fused, self.cat_features.T)
             self.accelerator.print(preds)
-            norm_preds = torch.nn.functional.normalize(preds, p=2, dim=1)
+            norm_preds = torch.nn.functional.normalize(preds, p=2, dim=0)
             self.accelerator.print(norm_preds)
             self.accelerator.print("\n\n")
             flat_pred, flat_target, flat_indexes = self._prepare_for_metrics(
