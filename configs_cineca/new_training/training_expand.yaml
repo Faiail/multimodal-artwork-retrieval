@@ -43,11 +43,11 @@ dataset:
     text2image:
       catalogue:
         names: &csv_file data/processed/proj/test.csv
-        modalities: [text]
+        modalities: [text, graph]
         data_dir: &data_dir data/processed/complete_embeddings
       query:
         names: *csv_file
-        modalities: [image, graph]
+        modalities: [image]
         data_dir: *data_dir
     image2text:
       catalogue:
