@@ -52,11 +52,11 @@ dataset:
     image2text:
       catalogue:
         names: *csv_file
-        modalities: [image]
+        modalities: [image, graph]
         data_dir: *data_dir 
       query:
         names: *csv_file
-        modalities: [text, graph]
+        modalities: [text]
         data_dir: *data_dir
 model:
   name: complete_siamese_network
