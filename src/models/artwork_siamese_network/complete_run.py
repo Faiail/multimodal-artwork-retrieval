@@ -180,6 +180,7 @@ class CompleteRun(Run):
             data_dict = {k: v.to(self.accelerator.device) for k, v in data_dict.items()}
             x = self.model.encode(data_dict)
             fused = self.model.fusion_module(*x)
+            fused = torch.nn.functional.normalize(fused, p=2, dim=1)
             if self.cat_features is None:
                 self.cat_features = torch.zeros(
                     size=(len(self.cat_loader.dataset), fused.size(1))
@@ -219,13 +220,10 @@ class CompleteRun(Run):
             data_dict = {k: v.to(self.accelerator.device) for k, v in data_dict.items()}
             x = self.model.encode(data_dict)
             fused = self.model.fusion_module(*x).cpu()
+            fused = torch.nn.functional.normalize(fused, p=2, dim=1)
             preds = torch.mm(fused, self.cat_features.T)
-            self.accelerator.print(preds)
-            norm_preds = torch.nn.functional.normalize(preds, p=2, dim=0)
-            self.accelerator.print(norm_preds)
-            self.accelerator.print("\n\n")
             flat_pred, flat_target, flat_indexes = self._prepare_for_metrics(
-                norm_preds, label, device="cpu"
+                preds, label, device="cpu"
             )
 
             for v in self.metrics.values():
