@@ -1,0 +1,151 @@
+dataset:
+  train:
+    possible_modalities: [image, text, graph]
+    mode:
+      image: raw
+      text: raw
+      graph: embedding
+    data_dirs:
+      image: data/raw/images-resized
+      text: data/processed/proj/train.csv
+      graph: data/processed/complete_embeddings
+    dataset: data/processed/scores/train/data.csv
+    names: data/processed/proj/train.csv
+    preprocess:
+      image:
+        RandomHorizontalFlip:
+          p: 0.5
+        RandomPerspective:
+          distortion_scale: 0.6
+          p: 0.5
+      text:
+        RandomWordAug:
+          action: delete
+          aug_p: 0.4
+        SynonymAug:
+          aug_src: wordnet
+          aug_p: 0.4
+    score_strategy: discrete
+  val:
+    possible_modalities: [image, text, graph]
+    mode:
+      image: embedding
+      text: embedding
+      graph: embedding
+    data_dirs:
+      image: data/processed/complete_embeddings
+      text: data/processed/complete_embeddings
+      graph: data/processed/complete_embeddings
+    dataset: data/processed/scores/val/data.csv
+    names: data/processed/proj/val.csv
+    score_strategy: discrete
+  test:
+    text2image:
+      catalogue:
+        names: &csv_file data/processed/proj/test.csv
+        modalities: [text]
+        data_dir: &data_dir data/processed/complete_embeddings
+      query:
+        names: *csv_file
+        modalities: [image, graph]
+        data_dir: *data_dir
+    image2text:
+      catalogue:
+        names: *csv_file
+        modalities: [image]
+        data_dir: *data_dir 
+      query:
+        names: *csv_file
+        modalities: [text, graph]
+        data_dir: *data_dir
+model:
+  name: complete_siamese_network
+  text2image:
+    in_channels: &h_channels 512
+    out_channels: *h_channels
+    strategy: 0
+    n_layers: 1
+    act: tanh
+    dropout: &dropout 0.25
+  text2graph:
+    in_channels: *h_channels
+    out_channels: *h_channels
+    strategy: 0
+    n_layers: 1
+    act: tanh
+    dropout: *dropout
+  image2text:
+    in_channels: *h_channels
+    out_channels: *h_channels
+    strategy: 0
+    n_layers: 1
+    act: tanh
+    dropout: *dropout
+  image2graph:
+    in_channels: *h_channels
+    out_channels: *h_channels
+    strategy: 0
+    n_layers: 1
+    act: tanh
+    dropout: *dropout
+  fusion_module:
+    in_channels: *h_channels
+    hidden_channels: *h_channels
+    ff_channels: *h_channels
+    out_channels: *h_channels
+    dropout: *dropout
+    num_heads: 8
+  dropout: *dropout
+criterion_out:
+  reduction: mean
+criterion_emb:
+  margin: 0.1
+optimizer:
+  weight_decay: 0.0001
+scheduler:
+  factor: 0.1
+  patience: 2
+  cooldown: 2
+  verbose: False
+optuna:
+  optimizer__lr:
+    type: uniform
+    range: [0.00001, 0.0001]
+  criterion_out__alpha:
+    type: uniform
+    range: [0, 1]
+  criterion_out__gamma:
+    type: choice
+    range: [1, 2, 3]
+dataloader:
+  batch_size: 2048
+  num_workers: 8
+  drop_last: False
+  shuffle: True
+early_stop:
+  patience: 10
+  verbose: False
+backbone:
+    model_name: ViT-B-32
+    pretrained: laion2b_s34b_b79k
+tokenizer:
+  model_name: ViT-B-32
+metrics:
+  recall_at_1:
+    type: RetrievalRecall
+    params:
+      top_k: 1
+  recall_at_5:
+    type: RetrievalRecall
+    params:
+      top_k: 5
+  recall_at_10:
+    type: RetrievalRecall
+    params:
+      top_k: 10
+n_trials: 20
+out_dir: data/models/new_training_siamese_complete_full_embedding
+progress_bar: True
+num_epochs: 50
+verbose: True
+pbar: True
