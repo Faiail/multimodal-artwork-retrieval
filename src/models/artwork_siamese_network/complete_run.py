@@ -173,7 +173,6 @@ class CompleteRun(Run):
 
     @torch.no_grad
     def _encode_cat_features(self):
-        assert not self.cat_loader.shuffle, "Cannot encode features for random sampled data points!!"
         bar = self.get_test_bar(
             self.cat_loader, desc=f"Extracting cat features for task {self.task}"
         )
@@ -215,7 +214,6 @@ class CompleteRun(Run):
     @torch.no_grad
     def test(self):
         self._encode_cat_features()
-        assert not self.query_loader.shuffle, "Cannot test with random sample!!"
         bar = self.get_test_bar(self.query_loader, desc=f"Testing for task {self.task}")
         for ix, data_dict in bar:
             label = data_dict.pop("score").to(self.accelerator.device)
