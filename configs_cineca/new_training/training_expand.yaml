@@ -47,7 +47,7 @@ dataset:
         data_dir: &data_dir data/processed/complete_embeddings
       query:
         names: *csv_file
-        modalities: [image]
+        modalities: [image, graph]
         data_dir: *data_dir
     image2text:
       catalogue:
@@ -56,7 +56,7 @@ dataset:
         data_dir: *data_dir 
       query:
         names: *csv_file
-        modalities: [text]
+        modalities: [text, graph]
         data_dir: *data_dir
 model:
   name: complete_siamese_network
