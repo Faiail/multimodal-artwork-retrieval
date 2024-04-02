@@ -220,10 +220,12 @@ class CompleteRun(Run):
             x = self.model.encode(data_dict)
             fused = self.model.fusion_module(*x).cpu()
             preds = torch.mm(fused, self.cat_features.T)
+            self.accelerator.print(preds)
+            norm_preds = torch.nn.functional.normalize(preds, p=2, dim=1)
             flat_pred, flat_target, flat_indexes = self._prepare_for_metrics(
-                preds, label, device="cpu"
+                norm_preds, label, device="cpu"
             )
-            self.accelerator.print(flat_pred)
+
             for v in self.metrics.values():
                 v.update(flat_pred, flat_target, flat_indexes)
         return {k: v.compute().detach().item() for k, v in self.metrics.items()}
