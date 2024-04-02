@@ -53,11 +53,12 @@ class CompleteRun(Run):
         self.cat_features = None
         if state_dict_dir is not None:
             self.accelerator.print("Loading state dict...")
-            state_dict = torch.load(
-                f"{state_dict_dir}/pytorch_model.bin",
-                map_location=self.accelerator.device,
-            )
-            self.model.load_state_dict(state_dict)
+            self.accelerator.load_state(state_dict_dir)
+            # state_dict = torch.load(
+            #     f"{state_dict_dir}/pytorch_model.bin",
+            #     map_location=self.accelerator.device,
+            # )
+            # self.model.load_state_dict(state_dict)
 
     def reset_modalities(self) -> None:
         self.source_modalities = [

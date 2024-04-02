@@ -187,8 +187,6 @@ class CompleteOptunaOptimizer(Optimizer):
         best_params = best_trial._params
         parameters = self.apply_params(best_params)
         parameters["dataloader"]["shuffle"] = False
-        
-        self.accelerator.print(parameters["dataloader"])
 
         for task, task_params in parameters.get("dataset").get("test", {}).items():
             if not task_params:
