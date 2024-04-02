@@ -224,7 +224,7 @@ class CompleteOptunaOptimizer(Optimizer):
 
             model_dir = parameters["out_dir"]
             early_stop = ParallelEarlyStopping(
-                out_dir=f"{model_dir}/{self.current_run}",
+                out_dir=f"{model_dir}/0",
                 **parameters["early_stop"],
             )
 
