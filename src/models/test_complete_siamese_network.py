@@ -1,4 +1,5 @@
-from src.models.train_complete_siamese_network import CompleteOptunaOptimizer, get_accelerator
+from src.models.train_complete_siamese_network import get_accelerator
+from src.optimization import CompleteOptunaOptimizer
 import src.models.utils as ut
 from src.utils import load_ruamel
 
