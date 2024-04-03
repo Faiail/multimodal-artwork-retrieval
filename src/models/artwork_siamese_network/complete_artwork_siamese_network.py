@@ -2,8 +2,13 @@ import torch
 from .fusion_module import FusionModule
 from src.models.feature_projector import FeatureProjector
 from src.data import DataModality
-from src.models.artwork_siamese_network.utils import ResultDict
+from enum import Enum
 
+
+class ResultDict(Enum):
+    PRED = "pred"
+    FUSED = "fused"
+    
 
 class CompleteArtwrokSiameseNetwork(torch.nn.Module):
     """New class that is able to perform everything:

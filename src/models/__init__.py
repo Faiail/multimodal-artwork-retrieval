@@ -39,3 +39,6 @@ def build_fusion_module(params: dict[str, Any]) -> FusionModule:
 model_registry = {
     "complete_siamese_network": build_complete_siamese_network,
 }
+
+
+from .artwork_siamese_network.complete_artwork_siamese_network import ResultDict
