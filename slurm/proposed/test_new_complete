@@ -14,4 +14,4 @@
 #SBATCH --out=train_siamese_complete_test.out
 #SBATCH --err=train_siamese_complete_test.out
 
-srun ./test_new_complete_exe $@
+srun ./slurm/proposed/test_new_complete_exe $@
