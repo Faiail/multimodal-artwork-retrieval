@@ -13,11 +13,10 @@ from src.models.loss.loss import BinaryFocalLoss
 from torch.nn import CosineEmbeddingLoss
 from src.models.EarlyStopping import ParallelEarlyStopping
 import os
-from src.models.artwork_siamese_network import utils as tr_ut
 from accelerate import Accelerator
 import optuna
-from src.models.utils import get_optuna_distribution
 import joblib
+from src.experiment import Run
 
 
 
@@ -85,7 +84,7 @@ class Optimizer(BaseOptimizer):
 
         self.current_run += 1
 
-        run = tr_ut.Run(
+        run = Run(
             model=model,
             backbone=backbone,
             tokenizer=tokenizer,
@@ -124,7 +123,7 @@ class OptunaOptimizer(Optimizer):
 
     def _get_space(self):
         params = self.params.get("optuna", {})
-        self.space = {k: get_optuna_distribution(v) for k, v in params.items()}
+        self.space = {k: ut.get_optuna_distribution(v) for k, v in params.items()}
 
     def ask_params(self):
         if self.accelerator.is_main_process:
@@ -206,7 +205,7 @@ class OptunaOptimizer(Optimizer):
 
             self.current_run += 1
 
-            run = tr_ut.Run(
+            run = Run(
                 model=model,
                 backbone=backbone,
                 tokenizer=tokenizer,
